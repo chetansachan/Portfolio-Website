@@ -11,13 +11,15 @@ type Config struct {
 	Database_URL string
 }
 
-func Load() {
+func Load() (config *Config) {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Error Loading Config")
 		return
 	}
 
-	config := os.Getenv("DATABASE_URL")
-	
-	return config()
+	config = &Config{
+		Database_URL: os.Getenv("DATABASE_URL"),
+	}
+
+	return config
 }
