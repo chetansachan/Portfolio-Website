@@ -17,5 +17,7 @@ func Load() {
 		return
 	}
 
-	config := os.Getenv("DATABASE_URL"),	
+	config := os.Getenv("DATABASE_URL")
+	
+	return config()
 }
