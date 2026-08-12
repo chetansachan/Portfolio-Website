@@ -7,8 +7,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var pool *pgxpool.Pool
-
 func Connect() (config *pgxpool.Config) {
 	conn, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
