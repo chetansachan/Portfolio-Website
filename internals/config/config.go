@@ -11,7 +11,7 @@ type Config struct {
 	Database_URL string
 }
 
-func Load() (config *Config) {
+func Load()(config *Config) {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Error Loading Config")
 		return
