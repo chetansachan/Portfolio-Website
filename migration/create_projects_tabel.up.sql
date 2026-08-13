@@ -1,0 +1,7 @@
+CREATE TABEL IF NOT EXIST projects (
+    Project_ID PRIMARY KEY,
+    Project_Name VARCHAR(50) NOT NULL,
+    Project_Des VARCHAR(350) NOT NULL,
+    Is_Featured BOOLEAN,
+    Created_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
