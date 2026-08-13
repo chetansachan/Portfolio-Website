@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Connect() (config *pgxpool.Config) {
+func Connect()(config *pgxpool.Config) {
 	conn, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		log.Fatal("Error Connecting to database")
