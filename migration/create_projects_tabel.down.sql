@@ -1,1 +1,0 @@
-DROP TABEL IF NOT EXIST projects
