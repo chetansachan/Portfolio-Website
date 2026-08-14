@@ -8,8 +8,11 @@ import (
 )
 
 func Load() string {
-	if err := godotenv.Load("../.env"); err != nil {
-		log.Println("Error Loading .env file")
+	// Try multiple paths so the app works from both the project root and cmd/
+	if err := godotenv.Load(".env"); err != nil {
+		if err2 := godotenv.Load("../.env"); err2 != nil {
+			log.Println("Error Loading .env file")
+		}
 	}
 
 	config := os.Getenv("DATABASE_URL")
