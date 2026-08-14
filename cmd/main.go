@@ -1,6 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"portfolio-website/internals/config"
+)
 
 func main() {
-	fmt.Print(Load())
+	fmt.Print(config.Load())
 }
