@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -11,9 +12,9 @@ type Config struct {
 	Database_URL string
 }
 
-func Load()(*Config) {
-	if err := godotenv.Load(); err != nil {
-		log.Println("Error Loading Config")
+func Load() *Config {
+	if err := godotenv.Load("../.env"); err != nil {
+		log.Println("Error Loading .env file")
 	}
 
 	config := &Config{
