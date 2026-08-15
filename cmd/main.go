@@ -24,10 +24,6 @@ func main() {
 
 	scripts.RunMigration("file://./migration", cfg)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Hello")
-	})
-
 	fmt.Println("Server is running on http://localhost:8080...")
 	err2 := http.ListenAndServe(":8080", nil)
 	if err2 != nil {
