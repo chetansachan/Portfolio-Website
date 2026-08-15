@@ -15,8 +15,7 @@ func main() {
 	cfg := config.Load()
 	fmt.Println(cfg)
 
-	_, err := database.Connect(ctx, cfg)
-	if err != nil {
+	if err := database.Connect(ctx, cfg); err != nil {
 		fmt.Println("Error Connecting to database")
 		return
 	}
