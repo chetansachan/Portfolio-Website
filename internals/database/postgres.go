@@ -13,12 +13,12 @@ func Connect(ctx context.Context, config string) error {
 		return err
 	}
 
-	Pool, err := pgxpool.NewWithConfig(ctx, configstg)
+	pool, err := pgxpool.NewWithConfig(ctx, configstg)
 	if err != nil {
 		log.Fatal("Error Connecting to database")
 	}
 
-	if err := Pool.Ping(context.Background()); err != nil {
+	if err := pool.Ping(context.Background()); err != nil {
 		log.Println("Could not ping the db!", err)
 		return err
 	}
