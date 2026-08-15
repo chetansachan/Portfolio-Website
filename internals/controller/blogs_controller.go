@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"portfolio-website/internals/database"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
 	"time"
@@ -25,7 +24,7 @@ func PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	err := service.PostBlog_Service(database.Pool, ctx, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	err := service.PostBlog_Service(ctx, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
 		log.Println(err)
 		return
