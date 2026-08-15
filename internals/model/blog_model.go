@@ -1,13 +1,17 @@
 package model
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
 type Blog struct {
-	Blog_id      uuid.UUID `json:"blog_id"`
-	Blog_name    string    `json:"blog_name"`
-	Blog_des     string    `json:"blog_des"`
-	Blog_content string    `json:"blog_content"`
-	Created_at   string    `json:"created_at"`
+	Blog_ID      uuid.UUID `json:"blog_id"`
+	Blog_Title   string    `json:"blog_title"`
+	Blog_DES     string    `json:"blog_des"`
+	Blog_Content string    `json:"blog_content"`
+	Blog_Slug    string    `json:"blog_slug"`
+	Blog_Banner  string    `json:"blog_banner"`
+	Created_At   time.Time `json:"created_at"`
 }
