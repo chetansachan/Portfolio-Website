@@ -6,11 +6,13 @@ import (
 	"portfolio-website/internals/controller"
 )
 
-func Router() {
+func Router() http.Handler {
 	mux := http.NewServeMux()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello")
 	})
 	mux.HandleFunc("POST /portfolio/blog", controller.PostBlog_Controller)
+
+	return mux
 }
