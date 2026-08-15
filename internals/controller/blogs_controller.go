@@ -25,4 +25,10 @@ func PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(b); err != nil {
+		log.Println("Error Encoding JSON")
+		return
+	}
 }
