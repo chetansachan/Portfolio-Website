@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -19,7 +20,8 @@ func PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := service.PostBlog_Service(b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	ctx := context.Background()
+	err := service.PostBlog_Service(ctx, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
 		log.Println(err)
 		return
@@ -27,7 +29,7 @@ func PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(b); err != nil {
+	if err := json.NewEncoder(w).Encode(blog); err != nil {
 		log.Println("Error Encoding JSON")
 		return
 	}
