@@ -8,7 +8,8 @@ import (
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
 	"time"
-	"uuid"
+
+	"github.com/google/uuid"
 )
 
 func PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
