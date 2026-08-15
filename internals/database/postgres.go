@@ -7,12 +7,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var Pool *pgxpool.Pool
-
-func Connect(ctx context.Context, config string) (*pgxpool.Config, error) {
+func Connect(ctx context.Context, config string) error {
 	configstg, err := pgxpool.ParseConfig(config)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	Pool, err := pgxpool.NewWithConfig(ctx, configstg)
@@ -22,8 +20,8 @@ func Connect(ctx context.Context, config string) (*pgxpool.Config, error) {
 
 	if err := Pool.Ping(context.Background()); err != nil {
 		log.Println("Could not ping the db!", err)
-		return nil, err
+		return err
 	}
 
-	return configstg, err
+	return err
 }
