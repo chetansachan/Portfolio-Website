@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
+	"time"
+	"uuid"
 )
 
 func PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +27,16 @@ func PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		return
+	}
+
+	blog := model.Blog{
+		Blog_ID:      uuid.New(),
+		Blog_Title:   b.Blog_Title,
+		Blog_DES:     b.Blog_DES,
+		Blog_Content: b.Blog_Content,
+		Blog_Slug:    b.Blog_Slug,
+		Blog_Banner:  b.Blog_Banner,
+		Created_At:   time.Now(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
