@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
+
+	"github.com/google/uuid"
 )
 
 type BlogService struct {
@@ -45,15 +48,14 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 	return blog, nil
 }
 
-func (s *BlogService) DeleteBlogBySlug_Service(ctx context.Context, slug string) error {
-	if slug == "" {
-		log.Println("Slug is Required to delete the blog")
-		return nil
+func (s *BlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		errors.New("id is required to delete the blog")
 	}
 
-	if err := s.BlogRepository.DeleteBlogBySlug(ctx, slug); err != nil {
+	if err := s.BlogRepository.DeleteBlogById(ctx, id); err != nil {
 		log.Println("Blog Not Found")
-		return nil
+		return err
 	}
 
 	return nil
