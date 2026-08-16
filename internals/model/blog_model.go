@@ -6,6 +6,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type Response struct {
+	Success bool
+	Message string
+}
+
+type GetBlogsResponse struct {
+	Response
+	Data Blog
+}
+
+type PostBlogResponse struct {
+	Response
+}
+
 type Blog struct {
 	Blog_ID      uuid.UUID `json:"blog_id"`
 	Blog_Title   string    `json:"blog_title"`
