@@ -15,13 +15,13 @@ func main() {
 	ctx := context.Background()
 	cfg := config.Load()
 	fmt.Println(cfg)
-	router := router.Router()
-
+	
 	if err := database.Connect(ctx, cfg); err != nil {
 		fmt.Println("Error Connecting to database")
 		return
 	}
 	fmt.Println("Successfully connected to database")
+	router := router.Router()
 
 	scripts.RunMigration("file://./migration", cfg)
 
