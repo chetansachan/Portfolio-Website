@@ -70,4 +70,12 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 		log.Println(err)
 		return
 	}
+
+	response := model.GetBlogsResponse{
+		Response: model.Response{
+			Success: true,
+			Message: "Blog Found Successfully",
+		},
+		Data: []model.Blog{blog},
+	}
 }
