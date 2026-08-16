@@ -44,3 +44,17 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 
 	return blog, nil
 }
+
+func (s *BlogService) DeleteBlogBySlug_Service(ctx context.Context, slug string) error {
+	if slug == "" {
+		log.Println("Slug is Required to delete the blog")
+		return nil
+	}
+
+	if err := s.BlogRepository.DeleteBlogBySlug(ctx, slug); err != nil {
+		log.Println("Blog Not Found")
+		return nil
+	}
+
+	return nil
+}
