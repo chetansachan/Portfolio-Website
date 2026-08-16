@@ -20,7 +20,6 @@ func Router() http.Handler {
 		fmt.Println("Hello")
 	})
 	mux.HandleFunc("POST /portfolio/blog", blogController.PostBlog_Controller)
-	mux.HandleFunc("GET /portfolio/blog/{slug}", blogController.GetBlogBySlug_Controller)
 
 	return mux
 }
