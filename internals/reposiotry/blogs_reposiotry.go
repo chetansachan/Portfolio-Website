@@ -6,6 +6,7 @@ import (
 	"log"
 	"portfolio-website/internals/model"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -46,12 +47,12 @@ func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.
 	return blog, nil
 }
 
-func (r *BlogRepository) DeleteBlogBySlug(ctx context.Context, slug string) error {
+func (r *BlogRepository) DeleteBlogById(ctx context.Context, id uuid.UUID) error {
 	query := `
-		DELETE * FROM blogs WHERE blog_slug = $1
+		DELETE FROM blogs WHERE blog_id = $1
 	`
 
-	_, err := r.Pool.Exec(ctx, query, slug)
+	_, err := r.Pool.Exec(ctx, query, id)
 	if err != nil {
 		log.Fatalf("Database error: %v", err)
 	}
