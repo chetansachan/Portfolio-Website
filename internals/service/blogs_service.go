@@ -29,3 +29,7 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, Blog_Title string, B
 
 	return blog, nil
 }
+
+func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error) {
+	
+}
