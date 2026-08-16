@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -21,6 +20,7 @@ func NewBlogController(blogService *service.BlogService) *BlogController {
 func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		log.Fatal("Invalid Method")
+		return
 	}
 
 	var b model.Blog
@@ -29,8 +29,7 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ctx := context.Background()
-	err := c.BlogService.PostBlog_Service(ctx, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	err := c.BlogService.PostBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
 		log.Println(err)
 		return
