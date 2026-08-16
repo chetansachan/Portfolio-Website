@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
+
+	"github.com/google/uuid"
 )
 
 type BlogController struct {
@@ -18,7 +20,7 @@ func NewBlogController(blogService *service.BlogService) *BlogController {
 
 func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		log.Fatal("Invalid Method")
+		log.Println("Invalid Method")
 		return
 	}
 
@@ -60,7 +62,7 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 
 func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		log.Fatal("Invalid Method")
+		log.Println("Invalid Method")
 		return
 	}
 
@@ -87,14 +89,20 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 	}
 }
 
-func (c *BlogController) DeleteBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
+func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		log.Fatal("Invalid Method")
+		log.Println("Invalid Method")
 		return
 	}
 
-	slug := r.PathValue("slug")
-	if err := c.BlogService.DeleteBlogBySlug_Service(r.Context(), slug); err != nil {
+	myid := r.PathValue("id")
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		log.Println("Error Parsing string")
+		return
+	}
+
+	if err := c.BlogService.DeleteBlogById_Service(r.Context(), id); err != nil {
 		log.Println(err)
 		return
 	}
