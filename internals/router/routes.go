@@ -11,7 +11,7 @@ import (
 
 func Router() http.Handler {
 	mux := http.NewServeMux()
-	
+
 	blogRepo := reposiotry.NewBlogRepository(database.Pool)
 	blogService := service.NewBlogService(blogRepo)
 	blogController := controller.NewBlogController(blogService)
@@ -20,6 +20,7 @@ func Router() http.Handler {
 		fmt.Println("Hello")
 	})
 	mux.HandleFunc("POST /portfolio/blog", blogController.PostBlog_Controller)
+	mux.HandleFunc("GET /portfolio/blog/{slug}", blogController.GetBlogBySlug_Controller)
 
 	return mux
 }
