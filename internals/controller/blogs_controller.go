@@ -78,4 +78,11 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 		},
 		Data: []model.Blog{blog},
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Println("Error Encoding JSON")
+		return
+	}
 }
