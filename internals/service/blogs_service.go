@@ -31,5 +31,8 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, Blog_Title string, B
 }
 
 func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error) {
-	
+	if slug == "" {
+		log.Println("Slug is Required to search the blog")
+		return model.Blog{}, nil
+	}
 }
