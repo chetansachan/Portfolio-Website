@@ -65,4 +65,9 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 	}
 
 	slug := r.PathValue("slug")
+	blog, err := c.BlogService.GetBlogBySlug_Service(r.Context(), slug)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
