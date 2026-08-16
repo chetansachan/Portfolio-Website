@@ -34,4 +34,14 @@ func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.
 	query := `
 		SELECT * FROM blogs WHERE blog_slug = $1
 	`
+
+	var blog model.Blog
+	if err := r.Pool.QueryRow(ctx, query, slug).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err == sql.ErrNoRows {
+		log.Println("No user found with that slug")
+		return model.Blog{}, nil
+	} else if err != nil {
+		log.Fatalf("Database error: %v", err)
+	}
+
+	return blog, nil
 }
