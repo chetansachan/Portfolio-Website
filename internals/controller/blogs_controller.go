@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"portfolio-website/internals/model"
@@ -29,17 +28,25 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err := c.BlogService.PostBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	blog, err := c.BlogService.PostBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	fmt.Println(b.Blog_ID)
 
 	response := model.PostBlogResponse{
 		Response: model.Response{
 			Success: true,
 			Message: "Blog Created Successfully",
+		},
+		Data: model.Blog{
+			Blog_ID:      blog.Blog_ID,
+			Blog_Title:   blog.Blog_Title,
+			Blog_DES:     blog.Blog_DES,
+			Blog_Content: blog.Blog_Content,
+			Blog_Slug:    blog.Blog_Slug,
+			Blog_Banner:  blog.Blog_Banner,
+			Created_At:   blog.Created_At,
 		},
 	}
 
