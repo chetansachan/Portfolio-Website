@@ -52,5 +52,9 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		log.Fatal("Invalid Method")
+		return
+	}
 
 }
