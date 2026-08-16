@@ -21,7 +21,7 @@ func Router() http.Handler {
 	})
 	mux.HandleFunc("POST /portfolio/postblog", blogController.PostBlog_Controller)
 	mux.HandleFunc("GET /portfolio/getblog/{slug}", blogController.GetBlogBySlug_Controller)
-	mux.HandleFunc("DELETE /portfolio/deleteblog/{slug}", blogController.DeleteBlogBySlug_Controller)
+	mux.HandleFunc("DELETE /portfolio/deleteblog/{id}", blogController.DeleteBlogById_Controller)
 
 	return mux
 }
