@@ -35,4 +35,10 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 		log.Println("Slug is Required to search the blog")
 		return model.Blog{}, nil
 	}
+
+	blog, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
+	if err != nil {
+		log.Println("Blog Not Found")
+		return model.Blog{}, nil
+	}
 }
