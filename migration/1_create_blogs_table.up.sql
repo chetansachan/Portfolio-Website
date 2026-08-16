@@ -1,5 +1,7 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS blogs (
-    blog_id SERIAL PRIMARY KEY,
+    blog_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     blog_title VARCHAR(150) NOT NULL,
     blog_des VARCHAR(350) NOT NULL,
     blog_slug VARCHAR(150) NOT NULL UNIQUE,
