@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log"
+	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
 )
 
@@ -14,16 +15,17 @@ func NewBlogService(blogRepo *reposiotry.BlogRepository) *BlogService {
 	return &BlogService{BlogRepository: blogRepo}
 }
 
-func (s *BlogService) PostBlog_Service(ctx context.Context, Blog_Title string, Blog_DES string, Blog_Slug string, Blog_Content string, Blog_Banner string) error {
+func (s *BlogService) PostBlog_Service(ctx context.Context, Blog_Title string, Blog_DES string, Blog_Slug string, Blog_Content string, Blog_Banner string) (model.Blog, error) {
 	if Blog_Title == "" || Blog_DES == "" || Blog_Slug == "" || Blog_Content == "" || Blog_Banner == "" {
 		log.Println("Every field is required")
-		return nil
+		return model.Blog{}, nil
 	}
 
-	if err := s.BlogRepository.PostBlog(ctx, Blog_Title, Blog_DES, Blog_Slug, Blog_Content, Blog_Banner); err != nil {
+	blog, err := s.BlogRepository.PostBlog(ctx, Blog_Title, Blog_DES, Blog_Slug, Blog_Content, Blog_Banner)
+	if err != nil {
 		log.Println("Error Executing Query")
-		return nil
+		return model.Blog{}, nil
 	}
 
-	return nil
+	return blog, nil
 }
