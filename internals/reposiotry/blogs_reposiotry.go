@@ -33,5 +33,7 @@ func (r *BlogRepository) PostBlog(ctx context.Context, Blog_Title string, Blog_D
 }
 
 func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.Blog, error) {
-	
+	query := `
+		SELECT * FROM blogs WHERE blog_slug = $1
+	`
 }
