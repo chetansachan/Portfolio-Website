@@ -41,4 +41,6 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 		log.Println("Blog Not Found")
 		return model.Blog{}, nil
 	}
+
+	return blog, nil
 }
