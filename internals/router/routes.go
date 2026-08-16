@@ -19,9 +19,9 @@ func Router() http.Handler {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello")
 	})
-	mux.HandleFunc("POST /portfolio/blog", blogController.PostBlog_Controller)
-	mux.HandleFunc("GET /portfolio/blog/{slug}", blogController.GetBlogBySlug_Controller)
-	mux.HandleFunc("DELETE /portfolio/blog/{slug}", blogController.DeleteBlogBySlug_Controller)
+	mux.HandleFunc("POST /portfolio/postblog", blogController.PostBlog_Controller)
+	mux.HandleFunc("GET /portfolio/getblog/{slug}", blogController.GetBlogBySlug_Controller)
+	mux.HandleFunc("DELETE /portfolio/deleteblog/{slug}", blogController.DeleteBlogBySlug_Controller)
 
 	return mux
 }
