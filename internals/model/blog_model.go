@@ -13,11 +13,12 @@ type Response struct {
 
 type GetBlogsResponse struct {
 	Response
-	Data Blog
+	Data []Blog
 }
 
 type PostBlogResponse struct {
 	Response
+	Data Blog `json:"data"`
 }
 
 type Blog struct {
