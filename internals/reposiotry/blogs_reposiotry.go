@@ -31,3 +31,7 @@ func (r *BlogRepository) PostBlog(ctx context.Context, Blog_Title string, Blog_D
 
 	return blog, nil
 }
+
+func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.Blog, error) {
+	
+}
