@@ -45,3 +45,16 @@ func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.
 
 	return blog, nil
 }
+
+func (r *BlogRepository) DeleteBlogBySlug(ctx context.Context, slug string) error {
+	query := `
+		DELETE * FROM blogs WHERE blog_slug = $1
+	`
+
+	_, err := r.Pool.Exec(ctx, query, slug)
+	if err != nil {
+		log.Fatalf("Database error: %v", err)
+	}
+
+	return nil
+}
