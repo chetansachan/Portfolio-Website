@@ -86,3 +86,28 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 		return
 	}
 }
+
+func (c *BlogController) DeleteBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		log.Fatal("Invalid Method")
+		return
+	}
+
+	slug := r.PathValue("slug")
+	if err := c.BlogService.DeleteBlogBySlug_Service(r.Context(), slug); err != nil {
+		log.Println(err)
+		return
+	}
+
+	response := model.Response{
+		Success: true,
+		Message: "Blog Deleted Successfully",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Println("Error Encoding JSON")
+		return
+	}
+}
