@@ -64,4 +64,5 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 		return
 	}
 
+	slug := r.PathValue("slug")
 }
