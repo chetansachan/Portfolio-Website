@@ -119,3 +119,36 @@ func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *htt
 		return
 	}
 }
+
+func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPatch {
+		log.Println("Invalid Method")
+		return
+	}
+
+	myid := r.PathValue("id")
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		log.Println("Error Parsing string")
+		return
+	}
+
+	var b model.Blog
+	if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
+		log.Println("Error Decoding JSON")
+		return
+	}
+
+	blog, err := c.BlogService.UpdateBlogById_Service(r.Context(), id, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(blog); err != nil {
+		log.Println("Error Encoding JSON")
+		return
+	}
+}
