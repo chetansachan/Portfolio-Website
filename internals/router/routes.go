@@ -15,13 +15,18 @@ func Router() http.Handler {
 	blogRepo := reposiotry.NewBlogRepository(database.Pool)
 	blogService := service.NewBlogService(blogRepo)
 	blogController := controller.NewBlogController(blogService)
+	projectRepo := reposiotry.NewProjectRepository(database.Pool)
+	projectService := service.NewProjectService(projectRepo)
+	projectController := controller.NewProjectController(projectService)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello")
 	})
-	mux.HandleFunc("POST /portfolio/postblog", blogController.PostBlog_Controller)
-	mux.HandleFunc("GET /portfolio/getblog/{slug}", blogController.GetBlogBySlug_Controller)
-	mux.HandleFunc("DELETE /portfolio/deleteblog/{id}", blogController.DeleteBlogById_Controller)
+	mux.HandleFunc("POST /blog/postblog", blogController.PostBlog_Controller)
+	mux.HandleFunc("GET /blog/getblog/{slug}", blogController.GetBlogBySlug_Controller)
+	mux.HandleFunc("DELETE /blog/deleteblog/{id}", blogController.DeleteBlogById_Controller)
+	mux.HandleFunc("PATCH /blog/updateblog/{id}", blogController.UpdateBlogById_Controller)
+	mux.HandleFunc("POST /project/postproject", projectController.PostProject_Controller)
 
 	return mux
 }
