@@ -15,7 +15,7 @@ import (
 func main() {
 	ctx := context.Background()
 	cfg := config.Load()
-	fmt.Println(cfg)
+	fmt.Println(cfg) 
 
 	if err := database.Connect(ctx, cfg); err != nil {
 		fmt.Println("Error Connecting to database")
