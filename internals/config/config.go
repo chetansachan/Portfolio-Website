@@ -8,14 +8,24 @@ import (
 )
 
 func Load() string {
-	// Try multiple paths so the app works from both the project root and cmd/
+	// 1. Check if the environment variable is already set globally in the system (e.g. Railway / Production)
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL != "" {
+		return dbURL
+	}
+
+	// 2. Fallback: Load .env file for local development / testing
 	if err := godotenv.Load(".env"); err != nil {
 		if err2 := godotenv.Load("../.env"); err2 != nil {
-			log.Println("Error Loading .env file")
+			log.Println("Notice: No .env file found; checking system environment variables")
 		}
 	}
 
-	config := os.Getenv("DATABASE_URL")
+	// 3. Read after loading .env file
+	dbURL = os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Println("Warning: DATABASE_URL is not set in system environment variables or .env file")
+	}
 
-	return config
+	return dbURL
 }
