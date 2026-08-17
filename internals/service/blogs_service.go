@@ -60,3 +60,13 @@ func (s *BlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) 
 
 	return nil
 }
+
+func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string) (model.Blog, error) {
+	blog, err := s.BlogRepository.UpdateBlogById(ctx, id, title, des, slug, content, banner)
+	if err != nil {
+		log.Println("Blog Not Found")
+		return model.Blog{}, err
+	}
+
+	return blog, nil
+}
