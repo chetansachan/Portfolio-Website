@@ -59,3 +59,18 @@ func (r *BlogRepository) DeleteBlogById(ctx context.Context, id uuid.UUID) error
 
 	return nil
 }
+
+func (r *BlogRepository) UpdateBlogById(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string) (model.Blog, error) {
+	query := `
+		UPDATE blogs SET blog_title = $2, blog_des = $3, blog_slug = $4, blog_content = $5, blog_banner = $6
+		WHERE blog_id = $1
+		RETURNING blog_id, blog_title, blog_des, blog_slug, blog_content, blog_banner, created_at
+	`
+
+	var blog model.Blog
+	if err := r.Pool.QueryRow(ctx, query, id, title, des, slug, content, banner).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err != nil {
+		log.Fatalf("Database error: %v", err)
+	}
+
+	return blog, nil
+}
