@@ -1,0 +1,32 @@
+package reposiotry
+
+import (
+	"context"
+	"log"
+	"portfolio-website/internals/model"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type ProjectRepository struct {
+	Pool *pgxpool.Pool
+}
+
+func NewProjectRepository(pool *pgxpool.Pool) *ProjectRepository {
+	return &ProjectRepository{Pool: pool}
+}
+
+func (r *ProjectRepository) PostProject(ctx context.Context, name string, des string, banner string, content string, featured bool) (model.Project, error) {
+	query := `
+		INSERT INTO projects (project_name, project_des, project_banner, project_content, is_featured)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING project_id, project_name, project_des, project_banner, project_content, is_featured, created_at
+	`
+
+	var project model.Project
+	if err := r.Pool.QueryRow(ctx, query, name, des, banner, content, featured).Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Is_Featured, &project.Created_At); err != nil {
+		log.Fatalf("Database error: %v", err)
+	}
+
+	return project, nil
+}
