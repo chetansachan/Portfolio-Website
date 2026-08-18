@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"portfolio-website/internals/model"
@@ -57,12 +56,12 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 
 func (s *BlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
-		errors.New("id is required to delete the blog")
+		log.Println("Id is required to Delete the Blog")
+		return fmt.Errorf("Id is required to Delete the Blog '%w'", id)
 	}
 
 	if err := s.BlogRepository.DeleteBlogById(ctx, id); err != nil {
-		log.Println("Blog Not Found")
-		return err
+		return fmt.Errorf("Blog Not Found: %w", err)
 	}
 
 	return nil
