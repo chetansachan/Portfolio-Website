@@ -48,6 +48,23 @@ func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.
 	return blog, nil
 }
 
+func (r *BlogRepository) GetBlogById(ctx context.Context, id uuid.UUID) (model.Blog, error) {
+	query := `
+		SELECT * FROM blogs WHERE blog_id = $1
+	`
+
+	var blog model.Blog
+	if err := r.Pool.QueryRow(ctx, query, id).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err == sql.ErrNoRows {
+		log.Println("No user found with that id")
+		return model.Blog{}, err
+	} else if err != nil {
+		log.Printf("Database error: %v", err)
+		return  model.Blog{}, err
+	}
+
+	return blog, nil
+}
+
 func (r *BlogRepository) DeleteBlogById(ctx context.Context, id uuid.UUID) error {
 	query := `
 		DELETE FROM blogs WHERE blog_id = $1
