@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"portfolio-website/internals/model"
@@ -19,47 +20,47 @@ func NewBlogController(blogService *service.BlogService) *BlogController {
 }
 
 func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
 		return
 	}
 
 	var b model.Blog
 	if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
-		log.Println("Error Decoding JSON")
+		log.Printf("[WARN] Invalid JSON payload: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Invalid request body"})
 		return
 	}
 
 	blog, err := c.BlogService.PostBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Error Creating Blog",
-		})
+		switch {
+		case errors.Is(err, model.ErrValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "All fields are required",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
 		return
 	}
 
-	response := model.PostBlogResponse{
-		Response: model.Response{
-			Success: true,
-			Message: "Blog Created Successfully",
-		},
-		Data: model.Blog{
-			Blog_ID:      blog.Blog_ID,
-			Blog_Title:   blog.Blog_Title,
-			Blog_DES:     blog.Blog_DES,
-			Blog_Content: blog.Blog_Content,
-			Blog_Slug:    blog.Blog_Slug,
-			Blog_Banner:  blog.Blog_Banner,
-			Created_At:   blog.Created_At,
-		},
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(model.PostBlogResponse{
+		Response: model.Response{Success: true, Message: "Blog created successfully"},
+		Data:     blog,
+	})
 }
 
 func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
