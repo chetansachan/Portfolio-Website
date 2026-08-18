@@ -48,7 +48,7 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 
 	blog, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
 	if err != nil {
-		log.Printf("[ERROR] failed to gec blog from database: %v", err)
+		log.Printf("[ERROR] failed to get blog from database: %v", err)
 		return model.Blog{}, fmt.Errorf("Blog Not Found: %w", err)
 	}
 
