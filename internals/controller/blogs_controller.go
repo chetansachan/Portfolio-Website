@@ -20,7 +20,7 @@ func NewBlogController(blogService *service.BlogService) *BlogController {
 
 func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		log.Println("Invalid Method")
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -32,7 +32,12 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 
 	blog, err := c.BlogService.PostBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
-		log.Println(err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Error Creating Blog",
+		})
 		return
 	}
 
@@ -54,10 +59,7 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Println("Error Encoding JSON")
-		return
-	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
