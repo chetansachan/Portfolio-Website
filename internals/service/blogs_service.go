@@ -88,7 +88,29 @@ func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, 
 		log.Println("[WARN] validation failed")
 		return model.Blog{}, model.ErrIdValidation
 	}
-	
+
+	b, err := s.BlogRepository.GetBlogById(ctx, id)
+	if err != nil {
+		log.Printf("[ERROR] blog not found: %v", err)
+		return model.Blog{}, model.ErrBlogNotFound
+	}
+
+	if title == "" {
+		title = b.Blog_Title
+	}
+	if des == "" {
+		des = b.Blog_DES
+	}
+	if slug == "" {
+		slug = b.Blog_Slug
+	}
+	if content == "" {
+		content = b.Blog_Content
+	}
+	if banner == "" {
+		banner = b.Blog_Banner
+	}
+
 	blog, err := s.BlogRepository.UpdateBlogById(ctx, id, title, des, slug, content, banner)
 	if err != nil {
 		log.Printf("[ERROR] failed to update blog from database: %v", err)
