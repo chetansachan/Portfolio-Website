@@ -64,20 +64,32 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
 		return
 	}
 
 	slug := r.PathValue("slug")
 	blog, err := c.BlogService.GetBlogBySlug_Service(r.Context(), slug)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Blog not found",
-		})
+		switch {
+		case errors.Is(err, model.ErrSlugValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Slug field is required",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
 		return
 	}
 
