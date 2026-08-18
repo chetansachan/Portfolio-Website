@@ -102,7 +102,7 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusFound)
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -120,23 +120,30 @@ func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *htt
 	}
 
 	if err := c.BlogService.DeleteBlogById_Service(r.Context(), id); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Blog not found",
-		})
-		return
-	}
+		switch {
+		case errors.Is(err, model.ErrIdValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Id field is required",
+			})
 
-	response := model.Response{
-		Success: true,
-		Message: "Blog Deleted Successfully",
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(model.Response{
+		Success: true,
+		Message: "Blog Deleted Successfully",
+	})
 }
 
 func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *http.Request) {
@@ -160,34 +167,40 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 
 	blog, err := c.BlogService.UpdateBlogById_Service(r.Context(), id, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Blog not found",
-		})
-		return
-	}
+		switch {
+		case errors.Is(err, model.ErrIdValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Id field is required",
+			})
 
-	response := model.PostBlogResponse{
-		Response: model.Response{
-			Success: true,
-			Message: "Blog Updated Successfully",
-		},
-		Data: model.Blog{
-			Blog_ID:      blog.Blog_ID,
-			Blog_Title:   blog.Blog_Title,
-			Blog_DES:     blog.Blog_DES,
-			Blog_Content: blog.Blog_Content,
-			Blog_Slug:    blog.Blog_Slug,
-			Blog_Banner:  blog.Blog_Banner,
-			Created_At:   blog.Created_At,
-		},
+		case errors.Is(err, model.ErrBlogNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Blog Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	if err := json.NewEncoder(w).Encode(model.PostBlogResponse{
+		Response: model.Response{
+			Success: true,
+			Message: "Blog Updated Successfully",
+		},
+		Data: blog,
+	}); err != nil {
 		log.Println("Error Encoding JSON")
 		return
 	}
