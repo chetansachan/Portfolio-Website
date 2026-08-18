@@ -25,7 +25,7 @@ func (r *BlogRepository) PostBlog(ctx context.Context, Blog_Title string, Blog_D
 
 	var blog model.Blog
 	if err := r.Pool.QueryRow(ctx, query, Blog_Title, Blog_DES, Blog_Slug, Blog_Content, Blog_Banner).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err != nil {
-		log.Fatalf("Database error: %v", err)
+		log.Printf("Database error: %v", err)
 	}
 
 	return blog, nil
@@ -41,7 +41,7 @@ func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.
 		log.Println("No user found with that slug")
 		return model.Blog{}, nil
 	} else if err != nil {
-		log.Fatalf("Database error: %v", err)
+		log.Printf("Database error: %v", err)
 	}
 
 	return blog, nil
@@ -54,7 +54,7 @@ func (r *BlogRepository) DeleteBlogById(ctx context.Context, id uuid.UUID) error
 
 	_, err := r.Pool.Exec(ctx, query, id)
 	if err != nil {
-		log.Fatalf("Database error: %v", err)
+		log.Printf("Database error: %v", err)
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func (r *BlogRepository) UpdateBlogById(ctx context.Context, id uuid.UUID, title
 
 	var blog model.Blog
 	if err := r.Pool.QueryRow(ctx, query, id, title, des, slug, content, banner).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err != nil {
-		log.Fatalf("Database error: %v", err)
+		log.Printf("Database error: %v", err)
 	}
 
 	return blog, nil
