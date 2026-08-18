@@ -54,6 +54,21 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 	return blog, nil
 }
 
+func (s *BlogService) GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error) {
+	if id == uuid.Nil {
+		log.Println("[WARN] validation failed")
+		return model.Blog{}, model.ErrSlugValidation
+	}
+
+	blog, err := s.BlogRepository.GetBlogById(ctx, id)
+	if err != nil {
+		log.Printf("[ERROR] failed to get blog from database: %v", err)
+		return model.Blog{}, model.ErrBlogNotFound
+	}
+
+	return blog, nil
+}
+
 func (s *BlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		log.Println("[WARN] validation failed")
