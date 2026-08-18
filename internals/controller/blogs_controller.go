@@ -116,17 +116,31 @@ func (c *BlogController) GetBlogById_Controller(w http.ResponseWriter, r *http.R
 	}
 
 	myid := r.PathValue("id")
-	id, _ := uuid.Parse(myid)
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
 	blog, err := c.BlogService.GetBlogById_Service(r.Context(), id)
 	if err != nil {
 		switch {
-		case errors.Is(err, model.ErrSlugValidation):
+		case errors.Is(err, model.ErrIdValidation):
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Slug field is required",
+				Message: "Valid ID is required",
 			})
-
+		case errors.Is(err, model.ErrBlogNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Blog not found",
+			})
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{

@@ -17,6 +17,7 @@ RUN adduser -D appuser
 WORKDIR /app
 COPY --from=build /app/out .
 COPY --from=build /app/migration ./migration
+ENV LOCAL_SYSTEM_DB=false
 USER appuser
 EXPOSE 8080
-CMD ["./out"]
+CMD ["./out"]
