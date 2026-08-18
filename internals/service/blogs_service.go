@@ -25,6 +25,12 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, co
 		return model.Blog{}, model.ErrValidation
 	}
 
+	b, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
+	if err == nil {
+		log.Println("Blog with this slug is already exist")
+		return b, nil
+	}
+
 	blog, err := s.BlogRepository.PostBlog(ctx, title, des, slug, content, banner)
 	if err != nil {
 		log.Printf("[ERROR] database insert failed: %v", err)
