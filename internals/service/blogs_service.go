@@ -48,7 +48,7 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 	blog, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
 	if err != nil {
 		log.Printf("[ERROR] failed to get blog from database: %v", err)
-		return model.Blog{}, fmt.Errorf("Blog Not Found: %w", err)
+		return model.Blog{}, model.ErrBlogNotFound
 	}
 
 	return blog, nil
@@ -56,22 +56,28 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 
 func (s *BlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
-		log.Println("Id is required to Delete the Blog")
-		return fmt.Errorf("Id is required to Delete the Blog '%w'", id)
+		log.Println("[WARN] validation failed")
+		return model.ErrIdValidation
 	}
 
 	if err := s.BlogRepository.DeleteBlogById(ctx, id); err != nil {
-		return fmt.Errorf("Blog Not Found: %w", err)
+		log.Printf("[ERROR] failed to delete blog from database: %v", err)
+		return model.ErrBlogNotFound
 	}
 
 	return nil
 }
 
 func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string) (model.Blog, error) {
+	if id == uuid.Nil {
+		log.Println("[WARN] validation failed")
+		return model.Blog{}, model.ErrIdValidation
+	}
+	
 	blog, err := s.BlogRepository.UpdateBlogById(ctx, id, title, des, slug, content, banner)
 	if err != nil {
-		log.Println("Blog Not Found")
-		return model.Blog{}, err
+		log.Printf("[ERROR] failed to update blog from database: %v", err)
+		return model.Blog{}, model.ErrBlogNotFound
 	}
 
 	return blog, nil
