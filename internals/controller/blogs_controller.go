@@ -106,6 +106,48 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 	json.NewEncoder(w).Encode(response)
 }
 
+func (c *BlogController) GetBlogById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	myid := r.PathValue("id")
+	id, _ := uuid.Parse(myid)
+	blog, err := c.BlogService.GetBlogById_Service(r.Context(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrSlugValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Slug field is required",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusFound)
+	json.NewEncoder(w).Encode(model.PostBlogResponse{
+		Response: model.Response{
+			Success: true,
+			Message: "Blog Found Successfully",
+		},
+		Data: blog,
+	})
+}
+
 func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -194,14 +236,11 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(model.PostBlogResponse{
+	json.NewEncoder(w).Encode(model.PostBlogResponse{
 		Response: model.Response{
 			Success: true,
 			Message: "Blog Updated Successfully",
 		},
 		Data: blog,
-	}); err != nil {
-		log.Println("Error Encoding JSON")
-		return
-	}
+	})
 }
