@@ -95,7 +95,7 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 
 func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		log.Println("Invalid Method")
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -107,7 +107,12 @@ func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *htt
 	}
 
 	if err := c.BlogService.DeleteBlogById_Service(r.Context(), id); err != nil {
-		log.Println(err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Blog not found",
+		})
 		return
 	}
 
@@ -118,10 +123,7 @@ func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *htt
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Println("Error Encoding JSON")
-		return
-	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *http.Request) {
