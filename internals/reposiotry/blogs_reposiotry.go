@@ -56,6 +56,7 @@ func (r *BlogRepository) DeleteBlogById(ctx context.Context, id uuid.UUID) error
 	_, err := r.Pool.Exec(ctx, query, id)
 	if err != nil {
 		log.Printf("Database error: %v", err)
+		return err
 	}
 
 	return nil
@@ -71,6 +72,7 @@ func (r *BlogRepository) UpdateBlogById(ctx context.Context, id uuid.UUID, title
 	var blog model.Blog
 	if err := r.Pool.QueryRow(ctx, query, id, title, des, slug, content, banner).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err != nil {
 		log.Printf("Database error: %v", err)
+		return model.Blog{}, err
 	}
 
 	return blog, nil
