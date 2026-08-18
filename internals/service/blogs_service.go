@@ -21,13 +21,13 @@ func NewBlogService(blogRepo *reposiotry.BlogRepository) *BlogService {
 
 func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
 	if title == "" || des == "" || slug == "" || content == "" || banner == "" {
-		log.Printf("[WARN] PostBlog: validation failed '%s'", slug)
+		log.Println("[WARN] validation failed")
 		return model.Blog{}, model.ErrValidation
 	}
 
 	blog, err := s.BlogRepository.PostBlog(ctx, title, des, slug, content, banner)
 	if err != nil {
-		log.Printf("[ERROR] PostBlog: database insert failed: %v", err)
+		log.Printf("[ERROR] database insert failed: %v", err)
 		return model.Blog{}, fmt.Errorf("failed to save blog: %w", err)
 	}
 
@@ -36,14 +36,14 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, co
 
 func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error) {
 	if slug == "" {
-		log.Println("Slug is Required to search the blog")
-		return model.Blog{}, nil
+		log.Println("[WARN] validation failed")
+		return model.Blog{}, fmt.Errorf("Slug is Required: %s", slug)
 	}
 
 	blog, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
 	if err != nil {
-		log.Println("Blog Not Found")
-		return model.Blog{}, err
+		log.Printf("[ERROR] failed to gec blog from database: %v", err)
+		return model.Blog{}, fmt.Errorf("Blog Not Found: %w", err)
 	}
 
 	return blog, nil
