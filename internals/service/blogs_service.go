@@ -21,7 +21,7 @@ func NewBlogService(blogRepo *reposiotry.BlogRepository) *BlogService {
 
 func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
 	if title == "" || des == "" || slug == "" || content == "" || banner == "" {
-		log.Printf("[WARN] PostBlog: validation failed for slug '%s'", slug)
+		log.Printf("[WARN] PostBlog: validation failed '%s'", slug)
 		return model.Blog{}, model.ErrValidation
 	}
 
