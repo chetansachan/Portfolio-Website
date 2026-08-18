@@ -42,7 +42,7 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, co
 func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error) {
 	if slug == "" {
 		log.Println("[WARN] validation failed")
-		return model.Blog{}, fmt.Errorf("Slug is Required: %s", slug)
+		return model.Blog{}, model.ErrSlugValidation
 	}
 
 	blog, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
