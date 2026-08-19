@@ -13,7 +13,7 @@ type ProjectResponse struct {
 
 type GetProjectResponse struct {
 	ProjectResponse
-	Data []Blog
+	Data []Project
 }
 
 type PostProjectResponse struct {
