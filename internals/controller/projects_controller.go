@@ -1,59 +1,71 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"portfolio-website/internals/model"
-	"portfolio-website/internals/service"
 )
 
-type ProjectController struct {
-	ProjectService *service.ProjectService
+type ProjectServiceInterface interface {
+	PostProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
 }
 
-func NewProjectController(projectservice *service.ProjectService) *ProjectController {
+type ProjectController struct {
+	ProjectService ProjectServiceInterface
+}
+
+func NewProjectController(projectservice ProjectServiceInterface) *ProjectController {
 	return &ProjectController{ProjectService: projectservice}
 }
 
 func (c *ProjectController) PostProject_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPost {
-		log.Println("Invalid Method")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
 		return
 	}
 
 	var p model.Project
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		log.Println("Error Decoding JSON")
+		log.Printf("[WARN] Invalid JSON payload: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Invalid request body"})
 		return
 	}
 
-	project, err := c.ProjectService.PostProject_Service(r.Context(), p.Project_Name, p.Project_DES, p.Project_Banner, p.Project_Content, p.Is_Featured)
+	project, err := c.ProjectService.PostProject_Service(r.Context(), p.Project_Name, p.Project_DES, p.Project_Banner, p.Project_Content, p.Project_Slug, p.Is_Featured)
 	if err != nil {
-		log.Println(err)
+		switch {
+		case errors.Is(err, model.ErrValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "All fields are required",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
 		return
 	}
 
-	response := model.PostProjectResponse{
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(model.PostProjectResponse{
 		ProjectResponse: model.ProjectResponse{
 			Success: true,
-			Message: "Project Posted Successfully",
-		},
-		Data: model.Project{
-			Project_ID:      project.Project_ID,
-			Project_Name:    project.Project_Name,
-			Project_DES:     project.Project_DES,
-			Project_Content: project.Project_Content,
-			Project_Banner:  project.Project_Banner,
-			Is_Featured:     project.Is_Featured,
-			Created_At:      project.Created_At,
-		},
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Println("Error Encoding JSON")
-		return
-	}
+			Message: "Project created successfully"},
+		Data: project,
+	})
 }
