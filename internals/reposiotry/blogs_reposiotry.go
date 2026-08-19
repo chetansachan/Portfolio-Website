@@ -32,10 +32,16 @@ func (r *BlogRepository) PostBlog(ctx context.Context, Blog_Title string, Blog_D
 	return blog, nil
 }
 
-func (r *BlogRepository) GetAllBlogs(ctx context.Context) ([]model.Blog, error) {
+func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit, offset int) ([]model.Blog, int, error) {
+	var totalBlogs int
+	countQuery := `SELECT COUNT(*) FROM blogs`
+	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalBlogs); err != nil {
+		return nil, 0, fmt.Errorf("failed to count blogs: %w", err)
+	}
+
 	rows, err := r.Pool.Query(ctx, "SELECT * FROM blogs")
 	if err != nil {
-		return []model.Blog{}, fmt.Errorf("query error: %w", err)
+		return []model.Blog{}, 0, fmt.Errorf("query error: %w", err)
 	}
 	defer rows.Close()
 
@@ -44,16 +50,16 @@ func (r *BlogRepository) GetAllBlogs(ctx context.Context) ([]model.Blog, error) 
 		var blog model.Blog
 		if err := rows.Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err == sql.ErrNoRows {
 			log.Printf("Database error: %v", err)
-			return []model.Blog{}, err
+			return []model.Blog{}, 0, err
 		}
 		blogs = append(blogs, blog)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("row loop error: %w", err)
+		return nil, 0, fmt.Errorf("row loop error: %w", err)
 	}
 
-	return blogs, nil
+	return blogs, totalBlogs, nil
 }
 
 func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.Blog, error) {
