@@ -7,4 +7,5 @@ var (
 	ErrSlugValidation = errors.New("Slug field ig required")
 	ErrIdValidation = errors.New("Id field is required")
 	ErrBlogNotFound   = errors.New("Blog not found")
+	ErrBlogAlreadyExist = errors.New("Blog already exist")
 )
