@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"portfolio-website/internals/model"
+	"strconv"
 
 	"github.com/google/uuid"
 )
@@ -17,7 +19,7 @@ import (
 // enabling unit testing with mocks.
 type BlogServiceInterface interface {
 	PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
-	GetAllBlogs_Service(ctx context.Context) ([]model.Blog, error)
+	GetAllBlogs_Service(ctx context.Context, size int, offset int) ([]model.Blog, int, error)
 	GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error
@@ -92,7 +94,45 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	blogs, err := c.BlogService.GetAllBlogs_Service(r.Context())
+	queryParams := r.URL.Query()
+	pageStr := queryParams.Get("page")
+	sizeStr := queryParams.Get("size")
+
+	page := 1
+	size := 10
+
+	if pageStr != "" {
+		p, err := strconv.Atoi(pageStr)
+		if err != nil || p <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid 'page' parameter: must be a positive integer",
+			})
+			return
+		}
+		page = p
+	}
+
+	if sizeStr != "" {
+		s, err := strconv.Atoi(sizeStr)
+		if err != nil || s <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid 'size' parameter: must be a positive integer",
+			})
+			return
+		}
+		if s > 100 {
+			s = 100
+		}
+		size = s
+	}
+	
+	offset := (page - 1) * size
+
+	blogs, totalBlogs, err := c.BlogService.GetAllBlogs_Service(r.Context(), size, offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrBlogNotFound):
@@ -101,7 +141,6 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 				Success: false,
 				Message: "No Blog Found",
 			})
-
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
@@ -112,16 +151,38 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	response := model.GetBlogsResponse{
+	totalPages := 0
+	if totalBlogs > 0 {
+		totalPages = int(math.Ceil(float64(totalBlogs) / float64(size)))
+	}
+
+	pagedBlogs := []model.Blog{}
+
+	if offset < totalBlogs {
+		end := offset + size
+		if end > totalBlogs {
+			end = totalBlogs
+		}
+		pagedBlogs = blogs[offset:end]
+	}
+
+	response := model.PaginatedResponse{
 		Response: model.Response{
 			Success: true,
 			Message: "Blogs Found Successfully",
 		},
-		Data: blogs,
+		Data: pagedBlogs,
+		Meta: model.PaginationMeta{
+			CurrentPage: page,
+			PageSize:    size,
+			TotalBlogs:  totalBlogs,
+			TotalPages:  totalPages,
+			HasNext:     page < totalPages,
+			HasPrev:     page > 1 && totalBlogs > 0,
+		},
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
