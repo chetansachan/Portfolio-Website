@@ -27,7 +27,7 @@ type MockBlogService struct {
 }
 
 // GetAllBlogs_Service implements [controller.BlogServiceInterface].
-func (m *MockBlogService) GetAllBlogs_Service(ctx context.Context) ([]model.Blog, error) {
+func (m *MockBlogService) GetAllBlogs_Service(ctx context.Context,page int, size int) ([]model.Blog, int, error) {
 	panic("unimplemented")
 }
 
