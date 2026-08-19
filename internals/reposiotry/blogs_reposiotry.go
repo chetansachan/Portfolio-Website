@@ -70,10 +70,15 @@ func (r *BlogRepository) DeleteBlogById(ctx context.Context, id uuid.UUID) error
 		DELETE FROM blogs WHERE blog_id = $1
 	`
 
-	_, err := r.Pool.Exec(ctx, query, id)
+	cmdTag, err := r.Pool.Exec(ctx, query, id)
 	if err != nil {
 		log.Printf("Database error: %v", err)
 		return err
+	}
+
+	// Check if any row was actually deleted
+	if cmdTag.RowsAffected() == 0 {
+		return model.ErrBlogNotFound
 	}
 
 	return nil
