@@ -3,6 +3,7 @@ package reposiotry
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"portfolio-website/internals/model"
 
@@ -31,6 +32,30 @@ func (r *BlogRepository) PostBlog(ctx context.Context, Blog_Title string, Blog_D
 	return blog, nil
 }
 
+func (r *BlogRepository) GetAllBlogs(ctx context.Context) ([]model.Blog, error) {
+	rows, err := r.Pool.Query(ctx, "SELECT * FROM blogs")
+	if err != nil {
+		return []model.Blog{}, fmt.Errorf("query error: %w", err)
+	}
+	defer rows.Close()
+
+	var blogs []model.Blog
+	for rows.Next() {
+		var blog model.Blog
+		if err := rows.Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Created_At); err == sql.ErrNoRows {
+			log.Printf("Database error: %v", err)
+			return []model.Blog{}, err
+		}
+		blogs = append(blogs, blog)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("row loop error: %w", err)
+	}
+
+	return blogs, nil
+}
+
 func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.Blog, error) {
 	query := `
 		SELECT * FROM blogs WHERE blog_slug = $1
@@ -42,7 +67,7 @@ func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.
 		return model.Blog{}, err
 	} else if err != nil {
 		log.Printf("Database error: %v", err)
-		return  model.Blog{}, err
+		return model.Blog{}, err
 	}
 
 	return blog, nil
@@ -59,7 +84,7 @@ func (r *BlogRepository) GetBlogById(ctx context.Context, id uuid.UUID) (model.B
 		return model.Blog{}, err
 	} else if err != nil {
 		log.Printf("Database error: %v", err)
-		return  model.Blog{}, err
+		return model.Blog{}, err
 	}
 
 	return blog, nil
