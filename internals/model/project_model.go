@@ -27,6 +27,7 @@ type Project struct {
 	Project_DES     string    `json:"project_des"`
 	Project_Content string    `json:"project_content"`
 	Project_Banner  string    `json:"project_banner"`
+	Project_Slug 	string	  `json:"project_slug"`	 
 	Is_Featured     bool      `json:"is_featured"`
 	Created_At      time.Time `json:"created_at"`
 }
