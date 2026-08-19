@@ -39,14 +39,14 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, co
 	return blog, nil
 }
 
-func (s *BlogService) GetAllBlogs_Service(ctx context.Context) ([]model.Blog, error) {
-	blogs, err := s.BlogRepository.GetAllBlogs(ctx)
+func (s *BlogService) GetAllBlogs_Service(ctx context.Context, limit, offset int) ([]model.Blog, int, error) {
+	blogs, totalblogs, err := s.BlogRepository.GetAllBlogs(ctx, limit, offset)
 	if err != nil {
 		log.Printf("[ERROR] failed to get blogs from database: %v", err)
-		return []model.Blog{}, model.ErrBlogNotFound
+		return []model.Blog{}, 0, model.ErrBlogNotFound
 	}
 
-	return blogs, nil
+	return blogs, totalblogs, nil
 }
 
 func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error) {
