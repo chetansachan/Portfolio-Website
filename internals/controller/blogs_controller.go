@@ -1,21 +1,33 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"portfolio-website/internals/model"
-	"portfolio-website/internals/service"
 
 	"github.com/google/uuid"
 )
 
-type BlogController struct {
-	BlogService *service.BlogService
+// BlogServiceInterface defines the contract for blog business logic.
+// The controller depends on this interface (not the concrete service),
+// enabling unit testing with mocks.
+type BlogServiceInterface interface {
+	PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
+	GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error)
+	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
+	DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error
+	UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Blog, error)
 }
 
-func NewBlogController(blogService *service.BlogService) *BlogController {
+type BlogController struct {
+	BlogService BlogServiceInterface
+}
+
+func NewBlogController(blogService BlogServiceInterface) *BlogController {
 	return &BlogController{BlogService: blogService}
 }
 
@@ -44,6 +56,13 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "All fields are required",
+			})
+
+		case errors.Is(err, model.ErrBlogAlreadyExist):
+			w.WriteHeader(http.StatusBadGateway)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Blog Already exist",
 			})
 
 		default:
@@ -81,6 +100,13 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Slug field is required",
+			})
+
+		case errors.Is(err, model.ErrBlogNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Blog Not Found",
 			})
 
 		default:
@@ -163,25 +189,34 @@ func (c *BlogController) GetBlogById_Controller(w http.ResponseWriter, r *http.R
 }
 
 func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
 		return
 	}
 
 	myid := r.PathValue("id")
 	id, err := uuid.Parse(myid)
+	fmt.Println(myid)
+	fmt.Println(id)
 	if err != nil {
-		log.Println("Error Parsing string")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Invalid ID format",
+		})
 		return
 	}
 
 	if err := c.BlogService.DeleteBlogById_Service(r.Context(), id); err != nil {
 		switch {
-		case errors.Is(err, model.ErrIdValidation):
-			w.WriteHeader(http.StatusBadRequest)
+		case errors.Is(err, model.ErrBlogNotFound):
+			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Id field is required",
+				Message: "Blog Not Found",
 			})
 
 		default:
@@ -203,15 +238,22 @@ func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *htt
 }
 
 func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPatch {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
 		return
 	}
 
 	myid := r.PathValue("id")
 	id, err := uuid.Parse(myid)
 	if err != nil {
-		log.Println("Error Parsing string")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Invalid ID format",
+		})
 		return
 	}
 
