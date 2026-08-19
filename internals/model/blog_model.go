@@ -6,6 +6,21 @@ import (
 	"github.com/google/uuid"
 )
 
+type PaginationMeta struct {
+	CurrentPage  int  `json:"current_page"`
+	PageSize     int  `json:"page_size"`
+	TotalRecords int  `json:"total_records"`
+	TotalPages   int  `json:"total_pages"`
+	HasNext      bool `json:"has_next"`
+	HasPrev      bool `json:"has_prev"`
+}
+
+type PaginatedResponse struct {
+	Response
+	Data []Blog         `json:"data"`
+	Meta PaginationMeta `json:"meta"`
+}
+
 type Response struct {
 	Success bool
 	Message string
