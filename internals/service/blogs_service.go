@@ -27,7 +27,7 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, co
 	b, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
 	if err == nil {
 		log.Println("Blog with this slug is already exist")
-		return b, nil
+		return b, model.ErrBlogAlreadyExist
 	}
 
 	blog, err := s.BlogRepository.PostBlog(ctx, title, des, slug, content, banner)
@@ -71,13 +71,12 @@ func (s *BlogService) GetBlogById_Service(ctx context.Context, id uuid.UUID) (mo
 
 func (s *BlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
-		log.Println("[WARN] validation failed")
 		return model.ErrIdValidation
 	}
 
 	if err := s.BlogRepository.DeleteBlogById(ctx, id); err != nil {
-		log.Printf("[ERROR] failed to delete blog from database: %v", err)
-		return model.ErrBlogNotFound
+		log.Printf("[ERROR] failed to delete blog: %v", err)
+		return err
 	}
 
 	return nil
