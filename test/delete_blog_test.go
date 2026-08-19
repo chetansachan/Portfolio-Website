@@ -26,6 +26,11 @@ type MockBlogService struct {
 	PostFunc   func(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
 }
 
+// GetAllBlogs_Service implements [controller.BlogServiceInterface].
+func (m *MockBlogService) GetAllBlogs_Service(ctx context.Context) ([]model.Blog, error) {
+	panic("unimplemented")
+}
+
 // Implement every method of BlogServiceInterface.
 // Only DeleteBlogById_Service has real logic; the rest are stubs.
 
