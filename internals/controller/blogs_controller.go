@@ -17,6 +17,7 @@ import (
 // enabling unit testing with mocks.
 type BlogServiceInterface interface {
 	PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
+	GetAllBlogs_Service(ctx context.Context) ([]model.Blog, error)
 	GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error
@@ -80,6 +81,48 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 		Response: model.Response{Success: true, Message: "Blog created successfully"},
 		Data:     blog,
 	})
+}
+
+func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	blogs, err := c.BlogService.GetAllBlogs_Service(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrBlogNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "No Blog Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	response := model.GetBlogsResponse{
+		Response: model.Response{
+			Success: true,
+			Message: "Blogs Found Successfully",
+		},
+		Data: blogs,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusFound)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http.Request) {
