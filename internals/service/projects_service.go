@@ -39,6 +39,17 @@ func (s *ProjectService) CreateProject_Service(ctx context.Context, name string,
 	return project, nil
 }
 
+func (s *ProjectService) GetAllProjects_Service(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
+	project, totalprojects, err := s.ProjectRepository.GetAllProjects(ctx, page, offset)
+	if err != nil {
+		log.Printf("[ERROR] failed to get projects from database: %v", err)
+		return []model.Project{}, 0, model.ErrProjectNotFound
+	}
+
+	return project, totalprojects, nil
+
+}
+
 func (s *ProjectService) GetProjectById_Service(ctx context.Context, id uuid.UUID) (model.Project, error) {
 	if id == uuid.Nil {
 		log.Println("[WARN] ID is Required")
