@@ -3,6 +3,7 @@ package reposiotry
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"portfolio-website/internals/model"
 
@@ -32,6 +33,37 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, name string, des 
 	}
 
 	return project, nil
+}
+
+func (r *ProjectRepository) GetAllProjects(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
+	var totalprojects int
+	countQuery := `SELECT COUNT(*) FROM projects`
+	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalprojects); err != nil {
+		return nil, 0, fmt.Errorf("failed to count projects: %w", err)
+	}
+
+	rows, err := r.Pool.Query(ctx, "SELECT * FROM projects ORDER BY created_at LIMIT $1 OFFSET $2", page, offset)
+	if err != nil {
+		return []model.Project{}, 0, model.ErrProjectNotFound
+	}
+	defer rows.Close()
+
+	var projects []model.Project
+	if rows.Next() {
+		var project model.Project
+		err := rows.Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Project_Slug, &project.Is_Featured, &project.Created_At)
+		if err != nil {
+			log.Printf("Database error: %v", err)
+			return []model.Project{}, 0, err
+		}
+		projects = append(projects, project)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("row loop error: %w", err)
+	}
+
+	return projects, totalprojects, nil
 }
 
 func (r *ProjectRepository) GetProjectById(ctx context.Context, id uuid.UUID) (model.Project, error) {
