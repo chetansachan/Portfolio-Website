@@ -81,3 +81,40 @@ func (s *ProjectService) DeleteProjectById_Service(ctx context.Context, id uuid.
 
 	return nil
 }
+
+func (s *ProjectService) UpdateProjectById_Service(ctx context.Context, id uuid.UUID, name string, des string, content string, banner string, slug string, featured bool) (model.Project, error) {
+	if id == uuid.Nil {
+		log.Println("[WARN] validation failed")
+		return model.Project{}, model.ErrIdValidation
+	}
+
+	p, err := s.ProjectRepository.GetProjectById(ctx, id)
+	if err != nil {
+		log.Printf("[ERROR] project not found: %v", err)
+		return model.Project{}, model.ErrProjectNotFound
+	}
+
+	if name == "" {
+		name = p.Project_Name
+	}
+	if des == "" {
+		des = p.Project_DES
+	}
+	if content == "" {
+		content = p.Project_Content
+	}
+	if banner == "" {
+		banner = p.Project_Banner
+	}
+	if slug == "" {
+		slug = p.Project_Slug
+	}
+
+	project, err := s.ProjectRepository.UpdateProjectById(ctx, id, name, des, content, banner, slug, featured)
+	if err != nil {
+		log.Printf("[ERROR] failed to update project from database: %v", err)
+		return model.Project{}, model.ErrProjectNotFound
+	}
+
+	return project, nil
+}
