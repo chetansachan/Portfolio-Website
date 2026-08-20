@@ -68,3 +68,21 @@ func (r *ProjectRepository) GetProjectBySlug(ctx context.Context, slug string) (
 	return project, nil
 }
 
+func (r *ProjectRepository) DeleteProjectById(ctx context.Context, id uuid.UUID) error {
+	query := `
+		DELETE FROM projects WHERE project_id = $1
+	`
+
+	cmdTag, err := r.Pool.Exec(ctx, query, id)
+	if err != nil {
+		log.Printf("Database error: %v", err)
+		return err
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return model.ErrProjectNotFound
+	}
+
+	return nil
+}
+
