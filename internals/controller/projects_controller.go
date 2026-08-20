@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"math"
 	"net/http"
 	"portfolio-website/internals/model"
+	"strconv"
 
 	"github.com/google/uuid"
 )
 
 type ProjectServiceInterface interface {
 	CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
+	GetAllProjects_Service(ctx context.Context, page int, offset int) ([]model.Project, int, error)
 	GetProjectById_Service(ctx context.Context, id uuid.UUID) (model.Project, error)
 	GetProjectBySlug_Service(ctx context.Context, slug string) (model.Project, error)
 	DeleteProjectById_Service(ctx context.Context, id uuid.UUID) error
@@ -81,6 +84,99 @@ func (c *ProjectController) CreateProject_Controller(w http.ResponseWriter, r *h
 			Message: "Project created successfully"},
 		Data: project,
 	})
+}
+
+func (c *ProjectController) GetAllProjects_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+	}
+
+	queryParam := r.URL.Query()
+	pageStr := queryParam.Get("page")
+	sizeStr := queryParam.Get("size")
+
+	page := 1
+	size := 10
+
+	if pageStr != "" {
+		p, err := strconv.Atoi(pageStr)
+		if err != nil || p <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid 'page' parameter: must be a positive integer",
+			})
+			return
+		}
+		page = p
+	}
+
+	if sizeStr != "" {
+		s, err := strconv.Atoi(sizeStr)
+		if err != nil || s <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid 'size' parameter: must be a positive integer",
+			})
+			return
+		}
+		if s > 100 {
+			s = 100
+		}
+		size = s
+	}
+
+	offset := (page - 1) * size
+
+	projects, totalProjects, err := c.ProjectService.GetAllProjects_Service(r.Context(), page, offset)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrProjectNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "No Project Found",
+			})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	totalPages := 0
+	if totalProjects > 0 {
+		totalPages = int(math.Ceil(float64(totalProjects) / float64(size)))
+	}
+
+	response := model.PaginatedProjectResponse{
+		ProjectResponse: model.ProjectResponse{
+			Success: true,
+			Message: "Blogs Found Successfully",
+		},
+		Data: projects,
+		Meta: model.PaginationProjectMeta{
+			CurrentPage: page,
+			PageSize:    size,
+			TotalProjects:  totalProjects,
+			TotalPages:  totalPages,
+			HasNext:     page < totalPages,
+			HasPrev:     page > 1 && totalProjects > 0,
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (c *ProjectController) GetProjectById_Controller(w http.ResponseWriter, r *http.Request) {
