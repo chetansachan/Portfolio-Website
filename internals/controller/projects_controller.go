@@ -15,6 +15,7 @@ type ProjectServiceInterface interface {
 	CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
 	GetProjectById_Service(ctx context.Context, id uuid.UUID) (model.Project, error)
 	GetProjectBySlug_Service(ctx context.Context, slug string) (model.Project, error)
+	DeleteProjectById_Service(ctx context.Context, id uuid.UUID) error
 }
 
 type ProjectController struct {
@@ -188,5 +189,52 @@ func (c *ProjectController) GetProjectBySlug_Controller(w http.ResponseWriter, r
 			Message: "Project Found Successfully",
 		},
 		Data: project,
+	})
+}
+
+func (c *ProjectController) DeleteProjectById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	myid := r.PathValue("id")
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	if err := c.ProjectService.DeleteProjectById_Service(r.Context(), id); err != nil {
+		switch {
+		case errors.Is(err, model.ErrProjectNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Project Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error",
+			})
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.Response{
+		Success: true,
+		Message: "Project Deleted Successfully",
 	})
 }
