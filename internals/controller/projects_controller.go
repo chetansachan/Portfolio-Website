@@ -14,6 +14,7 @@ import (
 type ProjectServiceInterface interface {
 	CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
 	GetProjectById_Service(ctx context.Context, id uuid.UUID) (model.Project, error)
+	GetProjectBySlug_Service(ctx context.Context, slug string) (model.Project, error)
 }
 
 type ProjectController struct {
@@ -104,6 +105,56 @@ func (c *ProjectController) GetProjectById_Controller(w http.ResponseWriter, r *
 			json.NewEncoder(w).Encode(model.ProjectResponse{
 				Success: false,
 				Message: "Id is Required",
+			})
+
+		case errors.Is(err, model.ErrProjectNotFound):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.ProjectResponse{
+				Success: false,
+				Message: "Project Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.ProjectResponse{
+				Success: false,
+				Message: "Internal Server Error",
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusFound)
+	json.NewEncoder(w).Encode(model.PostProjectResponse{
+		ProjectResponse: model.ProjectResponse{
+			Success: true,
+			Message: "Project Found Successfully",
+		},
+		Data: project,
+	})
+}
+
+func (c *ProjectController) GetProjectBySlug_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	slug := r.PathValue("slug")
+	project, err := c.ProjectService.GetProjectBySlug_Service(r.Context(), slug)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrSlugValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.ProjectResponse{
+				Success: false,
+				Message: "Slug is Required",
 			})
 
 		case errors.Is(err, model.ErrProjectNotFound):
