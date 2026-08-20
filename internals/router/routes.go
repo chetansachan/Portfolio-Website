@@ -30,6 +30,7 @@ func Router() http.Handler {
 	mux.HandleFunc("PATCH /blog/updateblog/{id}", blogController.UpdateBlogById_Controller)
 	mux.HandleFunc("POST /project/createproject", projectController.CreateProject_Controller)
 	mux.HandleFunc("GET /blog/getproject/id/{id}", projectController.GetProjectById_Controller)
+	mux.HandleFunc("GET /blog/getproject/slug/{slug}", projectController.GetProjectBySlug_Controller)
 
 	return mux
 }
