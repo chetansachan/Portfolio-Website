@@ -32,14 +32,14 @@ func (r *BlogRepository) CreateBlog(ctx context.Context, Blog_Title string, Blog
 	return blog, nil
 }
 
-func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit, offset int) ([]model.Blog, int, error) {
+func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int) ([]model.Blog, int, error) {
 	var totalBlogs int
 	countQuery := `SELECT COUNT(*) FROM blogs`
 	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalBlogs); err != nil {
 		return nil, 0, fmt.Errorf("failed to count blogs: %w", err)
 	}
 
-	rows, err := r.Pool.Query(ctx, "SELECT * FROM blogs")
+	rows, err := r.Pool.Query(ctx, "SELECT * FROM blogs ORDER BY created_at LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return []model.Blog{}, 0, fmt.Errorf("query error: %w", err)
 	}

@@ -156,22 +156,12 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 		totalPages = int(math.Ceil(float64(totalBlogs) / float64(size)))
 	}
 
-	pagedBlogs := []model.Blog{}
-
-	if offset < totalBlogs {
-		end := offset + size
-		if end > totalBlogs {
-			end = totalBlogs
-		}
-		pagedBlogs = blogs[offset:end]
-	}
-
 	response := model.PaginatedResponse{
 		Response: model.Response{
 			Success: true,
 			Message: "Blogs Found Successfully",
 		},
-		Data: pagedBlogs,
+		Data: blogs,
 		Meta: model.PaginationMeta{
 			CurrentPage: page,
 			PageSize:    size,
