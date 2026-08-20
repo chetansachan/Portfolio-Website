@@ -16,6 +16,7 @@ type ProjectServiceInterface interface {
 	GetProjectById_Service(ctx context.Context, id uuid.UUID) (model.Project, error)
 	GetProjectBySlug_Service(ctx context.Context, slug string) (model.Project, error)
 	DeleteProjectById_Service(ctx context.Context, id uuid.UUID) error
+	UpdateProjectById_Service(ctx context.Context, id uuid.UUID, name string, des string, content string, banner string, slug string, featured bool) (model.Project, error)
 }
 
 type ProjectController struct {
@@ -197,7 +198,7 @@ func (c *ProjectController) DeleteProjectById_Controller(w http.ResponseWriter, 
 
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		json.NewEncoder(w).Encode(model.ProjectResponse{Success: false, Message: "Method not allowed"})
 		return
 	}
 
@@ -205,7 +206,7 @@ func (c *ProjectController) DeleteProjectById_Controller(w http.ResponseWriter, 
 	id, err := uuid.Parse(myid)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.Response{
+		json.NewEncoder(w).Encode(model.ProjectResponse{
 			Success: false,
 			Message: "Invalid ID format",
 		})
@@ -236,5 +237,69 @@ func (c *ProjectController) DeleteProjectById_Controller(w http.ResponseWriter, 
 	json.NewEncoder(w).Encode(model.Response{
 		Success: true,
 		Message: "Project Deleted Successfully",
+	})
+}
+
+func (c *ProjectController) UpdateProjectById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPatch {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.ProjectResponse{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	myid := r.PathValue("id")
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	var p model.Project
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		log.Println("Error Decoding JSON")
+		return
+	}
+
+	project, err := c.ProjectService.UpdateProjectById_Service(r.Context(), id, p.Project_Name, p.Project_DES, p.Project_Content, p.Project_Banner, p.Project_Slug, p.Is_Featured)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrIdValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Id field is required",
+			})
+
+		case errors.Is(err, model.ErrProjectNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Project Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error",
+			})
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.PostProjectResponse{
+		ProjectResponse: model.ProjectResponse{
+			Success: true,
+			Message: "Project Updated Successfully",
+		},
+		Data: project,
 	})
 }
