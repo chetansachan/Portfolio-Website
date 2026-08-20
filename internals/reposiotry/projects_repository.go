@@ -26,7 +26,7 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, name string, des 
 	`
 
 	var project model.Project
-	if err := r.Pool.QueryRow(ctx, query, name, des, banner, content, featured).Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Project_Slug, &project.Is_Featured, &project.Created_At); err != nil {
+	if err := r.Pool.QueryRow(ctx, query, name, des, banner, content, slug, featured).Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Project_Slug, &project.Is_Featured, &project.Created_At); err != nil {
 		log.Printf("Database error: %v", err)
 		return model.Project{}, err
 	}
@@ -86,3 +86,18 @@ func (r *ProjectRepository) DeleteProjectById(ctx context.Context, id uuid.UUID)
 	return nil
 }
 
+func (r *ProjectRepository) UpdateProjectById(ctx context.Context, id uuid.UUID, name string, des string, content string, banner string, slug string, featured bool) (model.Project, error) {
+	query := `
+		UPDATE projects SET project_name = $2, project_des = $3, project_content = $4, project_banner = $5, project_slug = $6, is_featured = $7
+		WHERE project_id = $1
+		RETURNING project_id, project_name, project_des, project_banner, project_content, project_slug, is_featured, created_at
+	`
+
+	var project model.Project
+	if err := r.Pool.QueryRow(ctx, query, id, name, des, content, banner, slug, featured).Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Project_Slug, &project.Is_Featured, &project.Created_At); err != nil {
+		log.Printf("Database error: %v", err)
+		return model.Project{}, err
+	}
+
+	return project, nil
+}
