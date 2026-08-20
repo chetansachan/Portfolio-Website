@@ -7,10 +7,13 @@ import (
 	"log"
 	"net/http"
 	"portfolio-website/internals/model"
+
+	"github.com/google/uuid"
 )
 
 type ProjectServiceInterface interface {
 	CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
+	GetProjectById_Service(ctx context.Context, id uuid.UUID) (model.Project, error)
 }
 
 type ProjectController struct {
@@ -66,6 +69,66 @@ func (c *ProjectController) CreateProject_Controller(w http.ResponseWriter, r *h
 		ProjectResponse: model.ProjectResponse{
 			Success: true,
 			Message: "Project created successfully"},
+		Data: project,
+	})
+}
+
+func (c *ProjectController) GetProjectById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	myId := r.PathValue("id")
+	id, err := uuid.Parse(myId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Invalid Id Format",
+		})
+		return
+	}
+
+	project, err := c.ProjectService.GetProjectById_Service(r.Context(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrIdValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.ProjectResponse{
+				Success: false,
+				Message: "Id is Required",
+			})
+
+		case errors.Is(err, model.ErrProjectNotFound):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.ProjectResponse{
+				Success: false,
+				Message: "Project Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.ProjectResponse{
+				Success: false,
+				Message: "Internal Server Error",
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusFound)
+	json.NewEncoder(w).Encode(model.PostProjectResponse{
+		ProjectResponse: model.ProjectResponse{
+			Success: true,
+			Message: "Project Found Successfully",
+		},
 		Data: project,
 	})
 }
