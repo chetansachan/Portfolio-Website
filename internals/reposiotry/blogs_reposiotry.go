@@ -19,7 +19,7 @@ func NewBlogRepository(pool *pgxpool.Pool) *BlogRepository {
 	return &BlogRepository{Pool: pool}
 }
 
-func (r *BlogRepository) PostBlog(ctx context.Context, Blog_Title string, Blog_DES string, Blog_Slug string, Blog_Content string, Blog_Banner string) (model.Blog, error) {
+func (r *BlogRepository) CreateBlog(ctx context.Context, Blog_Title string, Blog_DES string, Blog_Slug string, Blog_Content string, Blog_Banner string) (model.Blog, error) {
 	query := `
 	INSERT INTO blogs (blog_title, blog_des, blog_slug, blog_content, blog_banner) VALUES ($1, $2, $3, $4, $5) RETURNING blog_id, blog_title, blog_des, blog_slug, blog_content, blog_banner, created_at
 	`

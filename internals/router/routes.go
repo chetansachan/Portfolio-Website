@@ -22,13 +22,13 @@ func Router() http.Handler {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello")
 	})
-	mux.HandleFunc("POST /blog/postblog", blogController.PostBlog_Controller)
+	mux.HandleFunc("POST /blog/createblog", blogController.CreateBlog_Controller)
 	mux.HandleFunc("GET /blog/getallblogs", blogController.GetAllBlogs_Controller)
 	mux.HandleFunc("GET /blog/getblog/slug/{slug}", blogController.GetBlogBySlug_Controller)
 	mux.HandleFunc("GET /blog/getblog/id/{id}", blogController.GetBlogById_Controller)
 	mux.HandleFunc("DELETE /blog/deleteblog/{id}", blogController.DeleteBlogById_Controller)
 	mux.HandleFunc("PATCH /blog/updateblog/{id}", blogController.UpdateBlogById_Controller)
-	mux.HandleFunc("POST /project/postproject", projectController.PostProject_Controller)
+	mux.HandleFunc("POST /project/createproject", projectController.CreateProject_Controller)
 
 	return mux
 }

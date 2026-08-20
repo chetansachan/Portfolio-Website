@@ -18,7 +18,7 @@ import (
 // The controller depends on this interface (not the concrete service),
 // enabling unit testing with mocks.
 type BlogServiceInterface interface {
-	PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
+	CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
 	GetAllBlogs_Service(ctx context.Context, size int, offset int) ([]model.Blog, int, error)
 	GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
@@ -34,7 +34,7 @@ func NewBlogController(blogService BlogServiceInterface) *BlogController {
 	return &BlogController{BlogService: blogService}
 }
 
-func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Request) {
+func (c *BlogController) CreateBlog_Controller(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
@@ -51,7 +51,7 @@ func (c *BlogController) PostBlog_Controller(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	blog, err := c.BlogService.PostBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	blog, err := c.BlogService.CreateBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrValidation):

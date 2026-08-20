@@ -354,7 +354,7 @@ func TestPostBlog_Controller(t *testing.T) {
 
 			// --- Record response ---
 			w := httptest.NewRecorder()
-			blogController.PostBlog_Controller(w, req)
+			blogController.CreateBlog_Controller(w, req)
 
 			// --- Assert status code ---
 			if w.Code != tt.expectedStatus {

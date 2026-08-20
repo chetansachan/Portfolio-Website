@@ -16,13 +16,13 @@ func NewProjectService(projectrepository *reposiotry.ProjectRepository) *Project
 	return &ProjectService{ProjectRepository: projectrepository}
 }
 
-func (s *ProjectService) PostProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error) {
+func (s *ProjectService) CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error) {
 	if name == "" || des == "" || banner == "" || content == "" || slug == "" {
 		log.Println("[WARN] validation failed")
 		return model.Project{}, model.ErrValidation
 	}
 
-	project, err := s.ProjectRepository.PostProject(ctx, name, des, banner, content, slug, featured)
+	project, err := s.ProjectRepository.CreateProject(ctx, name, des, banner, content, slug, featured)
 	if err != nil {
 		log.Printf("[ERROR] database insert failed: %v", err)
 		return model.Project{}, fmt.Errorf("failed to save project: %w", err)

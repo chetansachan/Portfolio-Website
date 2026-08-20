@@ -18,7 +18,7 @@ func NewBlogService(blogRepo *reposiotry.BlogRepository) *BlogService {
 	return &BlogService{BlogRepository: blogRepo}
 }
 
-func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
+func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
 	if title == "" || des == "" || slug == "" || content == "" || banner == "" {
 		log.Println("[WARN] validation failed")
 		return model.Blog{}, model.ErrValidation
@@ -30,7 +30,7 @@ func (s *BlogService) PostBlog_Service(ctx context.Context, title, des, slug, co
 		return b, model.ErrBlogAlreadyExist
 	}
 
-	blog, err := s.BlogRepository.PostBlog(ctx, title, des, slug, content, banner)
+	blog, err := s.BlogRepository.CreateBlog(ctx, title, des, slug, content, banner)
 	if err != nil {
 		log.Printf("[ERROR] database insert failed: %v", err)
 		return model.Blog{}, fmt.Errorf("failed to save blog: %w", err)

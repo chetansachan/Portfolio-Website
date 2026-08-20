@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS projects (
     project_des VARCHAR(350) NOT NULL,
     project_banner TEXT NOT NULL,
     project_content TEXT NOT NULL,
+    project_slug TEXT NOT NULL,
     is_featured BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );

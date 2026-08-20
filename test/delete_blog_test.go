@@ -34,7 +34,7 @@ func (m *MockBlogService) GetAllBlogs_Service(ctx context.Context,page int, size
 // Implement every method of BlogServiceInterface.
 // Only DeleteBlogById_Service has real logic; the rest are stubs.
 
-func (m *MockBlogService) PostBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
+func (m *MockBlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
 	if m.PostFunc != nil {
 		return m.PostFunc(ctx, title, des, slug, content, banner)
 	}

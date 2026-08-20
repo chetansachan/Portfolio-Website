@@ -10,7 +10,7 @@ import (
 )
 
 type ProjectServiceInterface interface {
-	PostProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
+	CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
 }
 
 type ProjectController struct {
@@ -21,7 +21,7 @@ func NewProjectController(projectservice ProjectServiceInterface) *ProjectContro
 	return &ProjectController{ProjectService: projectservice}
 }
 
-func (c *ProjectController) PostProject_Controller(w http.ResponseWriter, r *http.Request) {
+func (c *ProjectController) CreateProject_Controller(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
@@ -41,7 +41,7 @@ func (c *ProjectController) PostProject_Controller(w http.ResponseWriter, r *htt
 		return
 	}
 
-	project, err := c.ProjectService.PostProject_Service(r.Context(), p.Project_Name, p.Project_DES, p.Project_Banner, p.Project_Content, p.Project_Slug, p.Is_Featured)
+	project, err := c.ProjectService.CreateProject_Service(r.Context(), p.Project_Name, p.Project_DES, p.Project_Banner, p.Project_Content, p.Project_Slug, p.Is_Featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrValidation):

@@ -16,7 +16,7 @@ func NewProjectRepository(pool *pgxpool.Pool) *ProjectRepository {
 	return &ProjectRepository{Pool: pool}
 }
 
-func (r *ProjectRepository) PostProject(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error) {
+func (r *ProjectRepository) CreateProject(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error) {
 	query := `
 		INSERT INTO projects (project_name, project_des, project_banner, project_content, project_slug, is_featured)
 		VALUES ($1, $2, $3, $4, $5, $6)
