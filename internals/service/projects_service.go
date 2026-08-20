@@ -47,3 +47,18 @@ func (s *ProjectService) GetProjectById_Service(ctx context.Context, id uuid.UUI
 
 	return project, nil
 }
+
+func (s *ProjectService) GetProjectBySlug_Service(ctx context.Context, slug string) (model.Project, error) {
+	if slug == "" {
+		log.Println("[WARN] Slug is Required")
+		return model.Project{}, model.ErrSlugValidation
+	}
+
+	project, err := s.ProjectRepository.GetProjectBySlug(ctx, slug)
+	if err != nil {
+		log.Println("[Error] Error Geting project from database")
+		return model.Project{}, model.ErrProjectNotFound
+	}
+
+	return project, nil
+}
