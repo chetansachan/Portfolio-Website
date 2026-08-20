@@ -50,3 +50,21 @@ func (r *ProjectRepository) GetProjectById(ctx context.Context, id uuid.UUID) (m
 
 	return project, nil
 }
+
+func (r *ProjectRepository) GetProjectBySlug(ctx context.Context, slug string) (model.Project, error) {
+	query := `
+		SELECT * FROM projects WHERE project_slug = $1
+	`
+
+	var project model.Project
+	if err := r.Pool.QueryRow(ctx, query, slug).Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Project_Slug, &project.Is_Featured, &project.Created_At); err == sql.ErrNoRows {
+		log.Println("No Project Found with that slug")
+		return model.Project{}, err
+	} else if err != nil {
+		log.Printf("Database error: %v", err)
+		return model.Project{}, err
+	}
+
+	return project, nil
+}
+
