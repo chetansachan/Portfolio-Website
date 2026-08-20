@@ -55,6 +55,13 @@ func (c *ProjectController) CreateProject_Controller(w http.ResponseWriter, r *h
 				Message: "All fields are required",
 			})
 
+		case errors.Is(err, model.ErrProjectAlreadyExist):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Project Already Exist",
+			})
+
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{

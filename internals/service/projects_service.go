@@ -24,6 +24,12 @@ func (s *ProjectService) CreateProject_Service(ctx context.Context, name string,
 		return model.Project{}, model.ErrValidation
 	}
 
+	p, err := s.ProjectRepository.GetProjectBySlug(ctx, slug)
+	if err == nil {
+		log.Println("Project with this slug is already exist")
+		return p, model.ErrProjectAlreadyExist
+	}
+
 	project, err := s.ProjectRepository.CreateProject(ctx, name, des, banner, content, slug, featured)
 	if err != nil {
 		log.Printf("[ERROR] database insert failed: %v", err)
