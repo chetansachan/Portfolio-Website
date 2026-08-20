@@ -68,3 +68,16 @@ func (s *ProjectService) GetProjectBySlug_Service(ctx context.Context, slug stri
 
 	return project, nil
 }
+
+func (s *ProjectService) DeleteProjectById_Service(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return model.ErrIdValidation
+	}
+
+	if err := s.ProjectRepository.DeleteProjectById(ctx, id); err != nil {
+		log.Printf("[ERROR] failed to delete project: %v", err)
+		return err
+	}
+
+	return nil
+}
