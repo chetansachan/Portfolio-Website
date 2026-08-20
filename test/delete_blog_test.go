@@ -15,52 +15,6 @@ import (
 )
 
 // =============================================================================
-// Mock Service
-// =============================================================================
-// MockBlogService implements controller.BlogServiceInterface.
-// It lets us control what the service returns without touching a database.
-
-type MockBlogService struct {
-	// Each test case injects its own function to simulate different outcomes.
-	DeleteFunc func(ctx context.Context, id uuid.UUID) error
-	PostFunc   func(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
-}
-
-// GetAllBlogs_Service implements [controller.BlogServiceInterface].
-func (m *MockBlogService) GetAllBlogs_Service(ctx context.Context,page int, size int) ([]model.Blog, int, error) {
-	panic("unimplemented")
-}
-
-// Implement every method of BlogServiceInterface.
-// Only DeleteBlogById_Service has real logic; the rest are stubs.
-
-func (m *MockBlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
-	if m.PostFunc != nil {
-		return m.PostFunc(ctx, title, des, slug, content, banner)
-	}
-	return model.Blog{}, nil
-}
-
-func (m *MockBlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error) {
-	return model.Blog{}, nil
-}
-
-func (m *MockBlogService) GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error) {
-	return model.Blog{}, nil
-}
-
-func (m *MockBlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error {
-	if m.DeleteFunc != nil {
-		return m.DeleteFunc(ctx, id)
-	}
-	return nil
-}
-
-func (m *MockBlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Blog, error) {
-	return model.Blog{}, nil
-}
-
-// =============================================================================
 // Tests for DELETE /blog/deleteblog/{id}
 // =============================================================================
 
