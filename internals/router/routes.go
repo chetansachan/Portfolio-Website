@@ -32,6 +32,7 @@ func Router() http.Handler {
 	mux.HandleFunc("GET /project/getproject/id/{id}", projectController.GetProjectById_Controller)
 	mux.HandleFunc("GET /project/getproject/slug/{slug}", projectController.GetProjectBySlug_Controller)
 	mux.HandleFunc("DELETE /project/deleteproject/{id}", projectController.DeleteProjectById_Controller)
+	mux.HandleFunc("PATCH /project/updateproject/{id}", projectController.UpdateProjectById_Controller)
 
 	return mux
 }
