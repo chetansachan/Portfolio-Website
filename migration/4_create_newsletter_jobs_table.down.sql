@@ -1,0 +1,1 @@
+DROP TABEL IF NOT EXIST newsletter_jobs
