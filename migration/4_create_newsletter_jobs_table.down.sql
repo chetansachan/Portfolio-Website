@@ -1,1 +1,1 @@
-DROP TABEL IF NOT EXIST newsletter_jobs
+DROP TABEL IF EXIST newsletter_jobs
