@@ -1,1 +1,1 @@
-DROP TABEL IF NOT EXIST projects
+DROP TABEL IF EXIST projects
