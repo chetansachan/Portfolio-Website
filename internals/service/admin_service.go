@@ -19,7 +19,7 @@ func NewAdminService(adminRepo *reposiotry.AdminRepo) *AdminService {
 }
 
 func (s *AdminService) CreateAdmin_Service(ctx context.Context, email string, password string) (model.Admin, error) {
-	emailRegex := `^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
+	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 
 	if re.MatchString(email) {
