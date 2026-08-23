@@ -1,1 +1,1 @@
-DROP TABEL IF EXIST subscriber 
+DROP TABLE IF EXISTS subscribers;

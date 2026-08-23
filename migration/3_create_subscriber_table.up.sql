@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXiST subscriber (
+CREATE TABLE IF NOT EXISTS subscribers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     subscribed_at TIMESTAMP DEFAULT NOW(),
