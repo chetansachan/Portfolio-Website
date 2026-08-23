@@ -24,7 +24,6 @@ type BlogServiceInterface interface {
 	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error
 	UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Blog, error)
-	CreateSubscriber_Service(ctx context.Context, email string) error
 }
 
 type BlogController struct {
@@ -393,43 +392,5 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 			Message: "Blog Updated Successfully",
 		},
 		Data: blog,
-	})
-}
-
-func (c BlogController) CreateSubscriber_Controller(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Method Not Allowed",
-		})
-		return
-	}
-
-	var req struct {
-		Email string `json:"email"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("[WARN] Invalid JSON payload: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Invalid request body"})
-		return
-	}
-
-	if err := c.BlogService.CreateSubscriber_Service(r.Context(), req.Email); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Invalid email",
-		})
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(model.Response{
-		Success: true,
-		Message: "Subscribed",
 	})
 }
