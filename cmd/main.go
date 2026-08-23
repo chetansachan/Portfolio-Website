@@ -8,8 +8,10 @@ import (
 	"os"
 	"portfolio-website/internals/config"
 	"portfolio-website/internals/database"
+	"portfolio-website/internals/reposiotry"
 	"portfolio-website/internals/router"
 	"portfolio-website/internals/scripts"
+	"portfolio-website/internals/workers"
 )
  
 
@@ -31,6 +33,12 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	clientEmail := config.NewClient()
+	blogrepo := reposiotry.NewBlogRepository(database.Pool, config.NewClient())
+	worker := workers.NewNewsletterWorker(clientEmail, blogrepo)
+
+	go worker.Run(ctx)
 
 	fmt.Printf("Server is running on port %s...\n", port)
 	err2 := http.ListenAndServe(":"+port, router)
