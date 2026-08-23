@@ -13,8 +13,11 @@ import (
 func Router() http.Handler {
 	mux := http.NewServeMux()
 
-	blogRepo := reposiotry.NewBlogRepository(database.Pool, config.NewClient())
-	blogService := service.NewBlogService(blogRepo)
+	blogRepo := reposiotry.NewBlogRepository(database.Pool)
+	newsletterRepo := reposiotry.NewNewsletterRepo(database.Pool, config.NewClient())
+	blogService := service.NewBlogService(blogRepo, newsletterRepo)
+	newsletterService := service.NewNewsletterService(newsletterRepo)
+	newsletterController := controller.NewNewsletterController(newsletterService)
 	blogController := controller.NewBlogController(blogService)
 	projectRepo := reposiotry.NewProjectRepository(database.Pool)
 	projectService := service.NewProjectService(projectRepo)
@@ -35,7 +38,7 @@ func Router() http.Handler {
 	mux.HandleFunc("DELETE /project/deleteproject/{id}", projectController.DeleteProjectById_Controller)
 	mux.HandleFunc("PATCH /project/updateproject/{id}", projectController.UpdateProjectById_Controller)
 	mux.HandleFunc("GET /project/getallprojects", projectController.GetAllProjects_Controller)
-	mux.HandleFunc("POST /blog/subscribe", blogController.CreateSubscriber_Controller)
+	mux.HandleFunc("POST /blog/subscribe", newsletterController.CreateSubscriber_Controller)
 
 	return mux
 }

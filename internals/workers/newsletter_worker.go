@@ -8,12 +8,12 @@ import (
 )
 
 type NewsletterWorker struct {
-	Email *config.Client
-	BlogRepo *reposiotry.BlogRepository
+	Email          *config.Client
+	NewsletterRepo *reposiotry.NewsletterRepo
 }
 
-func NewNewsletterWorker(email *config.Client, blogRepo *reposiotry.BlogRepository) *NewsletterWorker {
-	return &NewsletterWorker{Email: email, BlogRepo: blogRepo}
+func NewNewsletterWorker(email *config.Client, newsletterRepo *reposiotry.NewsletterRepo) *NewsletterWorker {
+	return &NewsletterWorker{Email: email, NewsletterRepo: newsletterRepo}
 }
 
 func (w *NewsletterWorker) Run(ctx context.Context) {
@@ -26,7 +26,7 @@ func (w *NewsletterWorker) Run(ctx context.Context) {
 			return
 
 		case <-ticker.C:
-			w.BlogRepo.ProcessPendingJobs(ctx)
+			w.NewsletterRepo.ProcessPendingJobs(ctx)
 		}
 	}
 }

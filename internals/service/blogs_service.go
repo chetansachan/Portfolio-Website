@@ -6,17 +6,17 @@ import (
 	"log"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
-	"regexp"
 
 	"github.com/google/uuid"
 )
 
 type BlogService struct {
 	BlogRepository *reposiotry.BlogRepository
+	NewsletterRepo *reposiotry.NewsletterRepo
 }
 
-func NewBlogService(blogRepo *reposiotry.BlogRepository) *BlogService {
-	return &BlogService{BlogRepository: blogRepo}
+func NewBlogService(blogRepo *reposiotry.BlogRepository, newsletterRepo *reposiotry.NewsletterRepo) *BlogService {
+	return &BlogService{BlogRepository: blogRepo, NewsletterRepo: newsletterRepo}
 }
 
 func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
@@ -37,7 +37,7 @@ func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, 
 		return model.Blog{}, fmt.Errorf("failed to save blog: %w", err)
 	}
 
-	go s.BlogRepository.CreateNewsletterJobs(blog.Blog_ID)
+	go s.NewsletterRepo.CreateNewsletterJobs(blog.Blog_ID)
 
 	return blog, nil
 }
@@ -130,22 +130,4 @@ func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, 
 	}
 
 	return blog, nil
-}
-
-func (s *BlogService) CreateSubscriber_Service(ctx context.Context, email string) error {
-	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	re := regexp.MustCompile(emailRegex)
-
-	if re.MatchString(email) {
-		fmt.Printf("%s is valid\n", email)
-	} else {
-		return fmt.Errorf("%s is invalid\n", email)
-	}
-
-	if err := s.BlogRepository.CreateSubscriber(ctx, email); err != nil {
-		log.Printf("[ERROR] Failed to Subscribe: %v", err)
-		return err
-	}
-
-	return nil
 }
