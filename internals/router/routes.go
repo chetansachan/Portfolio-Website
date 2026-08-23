@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"portfolio-website/internals/config"
 	"portfolio-website/internals/controller"
 	"portfolio-website/internals/database"
 	"portfolio-website/internals/reposiotry"
@@ -12,7 +13,7 @@ import (
 func Router() http.Handler {
 	mux := http.NewServeMux()
 
-	blogRepo := reposiotry.NewBlogRepository(database.Pool)
+	blogRepo := reposiotry.NewBlogRepository(database.Pool, config.NewClient())
 	blogService := service.NewBlogService(blogRepo)
 	blogController := controller.NewBlogController(blogService)
 	projectRepo := reposiotry.NewProjectRepository(database.Pool)
@@ -34,6 +35,7 @@ func Router() http.Handler {
 	mux.HandleFunc("DELETE /project/deleteproject/{id}", projectController.DeleteProjectById_Controller)
 	mux.HandleFunc("PATCH /project/updateproject/{id}", projectController.UpdateProjectById_Controller)
 	mux.HandleFunc("GET /project/getallprojects", projectController.GetAllProjects_Controller)
+	mux.HandleFunc("POST /blog/subscribe", blogController.CreateSubscriber_Controller)
 
 	return mux
 }
