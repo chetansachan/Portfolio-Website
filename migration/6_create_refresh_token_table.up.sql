@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT NOT NULL,
     user_id UUID NOT NULL,
     user_name TEXT,
-    ip_address VARCHAR(45), 
     is_revoked BOOLEAN NOT NULL DEFAULT FALSE,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
