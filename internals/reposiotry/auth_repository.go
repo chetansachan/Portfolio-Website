@@ -18,12 +18,12 @@ func NewAuthRepo(pool *pgxpool.Pool) *AuthRepo {
 	return &AuthRepo{Pool: pool}
 }
 
-func (r *AuthRepo) RegisterUser(ctx context.Context, email string, password string) error {
+func (r *AuthRepo) RegisterUser(ctx context.Context, name string, email string, password string) error {
 	query := `
-	INSERT INTO users (email, password) VALUES ($1, $2)
+	INSERT INTO users (name, email, password) VALUES ($1, $2, $3)
 	`
 
-	if _, err := r.Pool.Exec(ctx, query, email, password); err != nil {
+	if _, err := r.Pool.Exec(ctx, query, name, email, password); err != nil {
 		log.Printf("Database error: %v", err)
 	}
 
@@ -35,18 +35,18 @@ func (r *AuthRepo) Login(ctx context.Context, email string) (model.User, error) 
 		SELECT * FROM users WHERE email = $1
 	`
 
-	var admin model.User
-	if err := r.Pool.QueryRow(ctx, query, email).Scan(&admin.UserId, &admin.Email, &admin.Password, &admin.Login_At); err != nil {
+	var user model.User
+	if err := r.Pool.QueryRow(ctx, query, email).Scan(&user.UserId, &user.Name, &user.Email, &user.Password, &user.Is_Admin, &user.Login_At); err != nil {
 		log.Printf("Database error: %v", err)
 	}
 
-	return admin, nil
+	return user, nil
 }
 
 func (r *AuthRepo) SaveRefreshTkn(ctx context.Context, token string, userID uuid.UUID, userName string, ipAddress string, expiredAt time.Time) error {
 	query := `
 		INSERT INTO refresh_tokens (token, user_id, user_name, ip_address, expires_at)
-        VALUES ($1, $2, $3, $4);
+        VALUES ($1, $2, $3, $4, $5);
 	`
 
 	if _, err := r.Pool.Exec(ctx, query, token, userID, userName, ipAddress, expiredAt); err != nil {
