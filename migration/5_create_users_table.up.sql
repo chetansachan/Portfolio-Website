@@ -1,6 +1,8 @@
-CREATE TABLE IF NOT EXISTS admin (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(120) NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password VARCHAR(80) NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     login_at TIMESTAMP DEFAULT NOW()
 );
