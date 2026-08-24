@@ -1,11 +1,15 @@
 package model
 
 import (
-	"portfolio-website/internals/service"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type TokenDetail struct {
+	AccessToken  string
+	RefreshToken string
+}
 
 type LoginResponse struct {
 	Success bool
@@ -15,7 +19,7 @@ type LoginResponse struct {
 type LoginResponseWithTkn struct {
 	Success bool
 	Message string
-	Token service.LoginResponse
+	Token   TokenDetail
 }
 
 type GetLoginResponse struct {

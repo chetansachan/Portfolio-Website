@@ -31,12 +31,6 @@ type RefreshTokenClaims struct {
 	UserId string
 }
 
-type LoginResponse struct {
-	User         model.User
-	AccessToken  string
-	RefreshToken string
-}
-
 func NewAuthService(authRepo *reposiotry.AuthRepo) *AuthService {
 	return &AuthService{AuthRepo: authRepo}
 }
@@ -72,41 +66,40 @@ func (s *AuthService) RegisterUser_Service(ctx context.Context, name string, ema
 	return nil
 }
 
-func (s *AuthService) Login_Service(ctx context.Context, name string, email string, password string, ip string) (LoginResponse, error) {
+func (s *AuthService) Login_Service(ctx context.Context, name string, email string, password string) (model.TokenDetail, error) {
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 
 	if !re.MatchString(email) {
-		return LoginResponse{}, fmt.Errorf("%s is invalid", email)
+		return model.TokenDetail{}, fmt.Errorf("%s is invalid", email)
 	}
 
 	user, err := s.AuthRepo.Login(ctx, email)
 	if err != nil {
-		return LoginResponse{}, fmt.Errorf("error finding user: %w", err)
+		return model.TokenDetail{}, fmt.Errorf("error finding user: %w", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return LoginResponse{}, fmt.Errorf("password incorrect")
+		return model.TokenDetail{}, fmt.Errorf("password incorrect")
 	}
 
-	accessToken, err := s.GenerateToken(ctx, user, false, ip)
+	accessToken, err := s.GenerateToken(ctx, user, false)
 	if err != nil {
-		return LoginResponse{}, fmt.Errorf("error generating access token: %w", err)
+		return model.TokenDetail{}, fmt.Errorf("error generating access token: %w", err)
 	}
 
-	refreshToken, err := s.GenerateToken(ctx, user, true, ip)
+	refreshToken, err := s.GenerateToken(ctx, user, true)
 	if err != nil {
-		return LoginResponse{}, fmt.Errorf("error generating refresh token: %w", err)
+		return model.TokenDetail{}, fmt.Errorf("error generating refresh token: %w", err)
 	}
 
-	return LoginResponse{
-		User:         user,
+	return model.TokenDetail{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
 
-func (s *AuthService) GenerateToken(ctx context.Context, user model.User, isRefreshToken bool, ip string) (string, error) {
+func (s *AuthService) GenerateToken(ctx context.Context, user model.User, isRefreshToken bool) (string, error) {
 	secretStr := os.Getenv("MY_JWT_SECRETKEY")
 	if secretStr == "" {
 		return "", fmt.Errorf("MY_JWT_SECRETKEY is not set")
@@ -142,7 +135,7 @@ func (s *AuthService) GenerateToken(ctx context.Context, user model.User, isRefr
 	if isRefreshToken {
 		hashRefreshTkn := HashToken(token)
 		expiredAt := time.Now().Add(7 * 24 * time.Hour)
-		if err := s.SaveRefreshToken(ctx, user, ip, hashRefreshTkn, expiredAt); err != nil {
+		if err := s.SaveRefreshToken(ctx, user, hashRefreshTkn, expiredAt); err != nil {
 			return "", fmt.Errorf("error saving refresh token: %w", err)
 		}
 	}
@@ -150,8 +143,8 @@ func (s *AuthService) GenerateToken(ctx context.Context, user model.User, isRefr
 	return token, nil
 }
 
-func (s *AuthService) SaveRefreshToken(ctx context.Context, user model.User, ipAddress string, hashRefreshTkn string, expiredAt time.Time) error {
-	if err := s.AuthRepo.SaveRefreshTkn(ctx, hashRefreshTkn, user.UserId, user.Name, ipAddress, expiredAt); err != nil {
+func (s *AuthService) SaveRefreshToken(ctx context.Context, user model.User, hashRefreshTkn string, expiredAt time.Time) error {
+	if err := s.AuthRepo.SaveRefreshTkn(ctx, hashRefreshTkn, user.UserId, user.Name, expiredAt); err != nil {
 		log.Printf("Failed to save refresh token for user %s: %v", user.Email, err)
 		return err
 	}
