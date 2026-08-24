@@ -41,9 +41,9 @@ func Router() http.Handler {
 	mux.HandleFunc("DELETE /project/deleteproject/{id}", projectController.DeleteProjectById_Controller)
 	mux.HandleFunc("PATCH /project/updateproject/{id}", projectController.UpdateProjectById_Controller)
 	mux.HandleFunc("GET /project/getallprojects", projectController.GetAllProjects_Controller)
-	mux.HandleFunc("POST /admin/createadmin", authController.RegisterUser_Controller)
-	mux.HandleFunc("GET /admin/login", authController.Login_Controller)
 	mux.HandleFunc("POST /blog/subscribe", newsletterController.CreateSubscriber_Controller)
+	mux.HandleFunc("POST /user/registeruser", authController.RegisterUser_Controller)
+	mux.HandleFunc("GET /user/login", authController.Login_Controller)
 
 	return mux
 }
