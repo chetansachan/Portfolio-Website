@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"log"
-	"net"
 	"net/http"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
@@ -81,14 +80,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var ip string
-	var err error
-	ip, _, err = net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		ip = r.RemoteAddr // Fallback if no port exists
-	}
-
-	LoginResponse, err := c.AuthService.Login_Service(r.Context(), u.Name, u.Email, u.Password, ip)
+	LoginResponse, err := c.AuthService.Login_Service(r.Context(), u.Name, u.Email, u.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.LoginResponse{
@@ -102,7 +94,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(model.LoginResponseWithTkn{
 		Success: true,
 		Message: "Login Successful",
-		Token: LoginResponse,
+		Token:   LoginResponse,
 	},
 	)
 }
