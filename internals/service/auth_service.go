@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"os"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
@@ -96,7 +97,7 @@ func (s *AuthService) Login_Service(ctx context.Context, name string, email stri
 	hashrefreshtkn := HashToken(refresh_token)
 
 	expired_at := time.Now().Add(7 * 24 * time.Hour)
-	if err := SaveRefreshToken(ctx, user, ip, hashrefreshtkn, expired_at); err != nil {
+	if err := s.SaveRefreshToken(ctx, user, ip, hashrefreshtkn, expired_at); err != nil {
 		return model.User{}, fmt.Errorf("Error Saving refresh token")
 	}
 
@@ -140,6 +141,11 @@ func GernateToken(ctx context.Context, user model.User, isRefeshToken bool) (str
 	return token, nil
 }
 
-func SaveRefreshToken(ctx context.Context, user model.User, ip string, hashrefreshtkn string, expired_at time.Time) error {
+func (s *AuthService) SaveRefreshToken(ctx context.Context, user model.User, ipAddress string, hashrefreshtkn string, expired_at time.Time) error {
+	if err := s.AuthRepo.SaveRefreshTkn(ctx, hashrefreshtkn, user.UserId, user.Name, ipAddress, expired_at); err != nil {
+		log.Println("Failed to save token")
+		return err
+	}
+
 	return nil
 }
