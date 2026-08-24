@@ -88,7 +88,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 		ip = r.RemoteAddr // Fallback if no port exists
 	}
 
-	admin, err := c.AuthService.Login_Service(r.Context(), u.Name, u.Email, u.Password, ip)
+	LoginResponse, err := c.AuthService.Login_Service(r.Context(), u.Name, u.Email, u.Password, ip)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.LoginResponse{
@@ -99,11 +99,10 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 	}
 
 	w.WriteHeader(http.StatusFound)
-	json.NewEncoder(w).Encode(model.GetLoginResponse{
-		Response: model.LoginResponse{
-			Success: true,
-			Message: "Login Successful",
-		},
-		Data: admin,
-	})
+	json.NewEncoder(w).Encode(model.LoginResponseWithTkn{
+		Success: true,
+		Message: "Login Successful",
+		Token: LoginResponse,
+	},
+	)
 }
