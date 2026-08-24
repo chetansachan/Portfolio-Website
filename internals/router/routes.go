@@ -18,6 +18,9 @@ func Router() http.Handler {
 	projectRepo := reposiotry.NewProjectRepository(database.Pool)
 	projectService := service.NewProjectService(projectRepo)
 	projectController := controller.NewProjectController(projectService)
+	authRepo := reposiotry.NewAuthRepo(database.Pool)
+	authService := service.NewAuthService(authRepo)
+	authController := controller.NewAuthController(authService)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello")
@@ -34,6 +37,8 @@ func Router() http.Handler {
 	mux.HandleFunc("DELETE /project/deleteproject/{id}", projectController.DeleteProjectById_Controller)
 	mux.HandleFunc("PATCH /project/updateproject/{id}", projectController.UpdateProjectById_Controller)
 	mux.HandleFunc("GET /project/getallprojects", projectController.GetAllProjects_Controller)
+	mux.HandleFunc("POST /admin/createadmin", authController.RegisterUser_Controller)
+	mux.HandleFunc("GET /admin/login", authController.Login_Controller)
 
 	return mux
 }
