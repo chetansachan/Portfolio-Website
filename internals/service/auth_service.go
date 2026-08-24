@@ -22,13 +22,19 @@ type AuthService struct {
 
 type AccessTokenClaims struct {
 	jwt.RegisteredClaims
-	Email string
-	Role  string
+	Email   string
+	IsAdmin bool
 }
 
 type RefreshTokenClaims struct {
 	jwt.RegisteredClaims
 	UserId string
+}
+
+type LoginResponse struct {
+	User         model.User
+	AccessToken  string
+	RefreshToken string
 }
 
 func NewAuthService(authRepo *reposiotry.AuthRepo) *AuthService {
@@ -44,108 +50,110 @@ func (s *AuthService) RegisterUser_Service(ctx context.Context, name string, ema
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 
-	if re.MatchString(email) {
-		fmt.Printf("%s is valid\n", email)
-	} else {
-		return fmt.Errorf("%s is invalid\n", email)
+	if !re.MatchString(email) {
+		return fmt.Errorf("%s is invalid", email)
 	}
 	if password == "" {
-		return fmt.Errorf("Password is requred Cannot be empty")
+		return fmt.Errorf("password is required and cannot be empty")
 	}
-	if len(password) <= 8 {
-		return fmt.Errorf("Password length is aytleast 8 charaters")
+	if len(password) < 8 {
+		return fmt.Errorf("password length must be at least 8 characters")
 	}
 
 	hashpassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
-		fmt.Println("Error hashing password")
+		return fmt.Errorf("error hashing password: %w", err)
 	}
-	password = string(hashpassword)
 
-	err2 := s.AuthRepo.RegisterUser(ctx, email, password)
-	if err2 != nil {
-		return fmt.Errorf("Error Creating Admin")
+	if err := s.AuthRepo.RegisterUser(ctx, name, email, string(hashpassword)); err != nil {
+		return fmt.Errorf("error creating user: %w", err)
 	}
 
 	return nil
 }
 
-func (s *AuthService) Login_Service(ctx context.Context, name string, email string, password string, ip string) (model.User, error) {
+func (s *AuthService) Login_Service(ctx context.Context, name string, email string, password string, ip string) (LoginResponse, error) {
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 
-	if re.MatchString(email) {
-		fmt.Printf("%s is valid\n", email)
-	} else {
-		return model.User{}, fmt.Errorf("%s is invalid\n", email)
+	if !re.MatchString(email) {
+		return LoginResponse{}, fmt.Errorf("%s is invalid", email)
 	}
 
 	user, err := s.AuthRepo.Login(ctx, email)
 	if err != nil {
-		return model.User{}, fmt.Errorf("Error finding Admin")
+		return LoginResponse{}, fmt.Errorf("error finding user: %w", err)
 	}
 
-	if err2 := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err2 != nil {
-		return model.User{}, fmt.Errorf("Password Incorrect")
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return LoginResponse{}, fmt.Errorf("password incorrect")
 	}
 
-	// Access token
-	access_token, err := GernateToken(ctx, user, false)
-
-	// Refresh token
-	refresh_token, err := GernateToken(ctx, user, true)
-	hashrefreshtkn := HashToken(refresh_token)
-
-	expired_at := time.Now().Add(7 * 24 * time.Hour)
-	if err := s.SaveRefreshToken(ctx, user, ip, hashrefreshtkn, expired_at); err != nil {
-		return model.User{}, fmt.Errorf("Error Saving refresh token")
+	accessToken, err := s.GenerateToken(ctx, user, false, ip)
+	if err != nil {
+		return LoginResponse{}, fmt.Errorf("error generating access token: %w", err)
 	}
 
-	fmt.Println(access_token)
-	fmt.Println(refresh_token)
+	refreshToken, err := s.GenerateToken(ctx, user, true, ip)
+	if err != nil {
+		return LoginResponse{}, fmt.Errorf("error generating refresh token: %w", err)
+	}
 
-	return user, nil
+	return LoginResponse{
+		User:         user,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
-func GernateToken(ctx context.Context, user model.User, isRefeshToken bool) (string, error) {
+func (s *AuthService) GenerateToken(ctx context.Context, user model.User, isRefreshToken bool, ip string) (string, error) {
 	secretStr := os.Getenv("MY_JWT_SECRETKEY")
+	if secretStr == "" {
+		return "", fmt.Errorf("MY_JWT_SECRETKEY is not set")
+	}
 	mySecretKey := []byte(secretStr)
 
 	var claims jwt.Claims
-	if !isRefeshToken {
+	if !isRefreshToken {
 		claims = &AccessTokenClaims{
-			jwt.RegisteredClaims{
+			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
 			},
-			user.Email,
-			"Admin",
+			Email:   user.Email,
+			IsAdmin: user.Is_Admin,
 		}
 	} else {
 		claims = &RefreshTokenClaims{
-			jwt.RegisteredClaims{
+			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
 			},
-			user.UserId.String(),
+			UserId: user.UserId.String(),
 		}
 	}
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	fmt.Println(t)
 	token, err := t.SignedString(mySecretKey)
 	if err != nil {
-		return "", fmt.Errorf("Error Gernating token")
+		return "", fmt.Errorf("error signing token: %w", err)
+	}
+
+	if isRefreshToken {
+		hashRefreshTkn := HashToken(token)
+		expiredAt := time.Now().Add(7 * 24 * time.Hour)
+		if err := s.SaveRefreshToken(ctx, user, ip, hashRefreshTkn, expiredAt); err != nil {
+			return "", fmt.Errorf("error saving refresh token: %w", err)
+		}
 	}
 
 	return token, nil
 }
 
-func (s *AuthService) SaveRefreshToken(ctx context.Context, user model.User, ipAddress string, hashrefreshtkn string, expired_at time.Time) error {
-	if err := s.AuthRepo.SaveRefreshTkn(ctx, hashrefreshtkn, user.UserId, user.Name, ipAddress, expired_at); err != nil {
-		log.Println("Failed to save token")
+func (s *AuthService) SaveRefreshToken(ctx context.Context, user model.User, ipAddress string, hashRefreshTkn string, expiredAt time.Time) error {
+	if err := s.AuthRepo.SaveRefreshTkn(ctx, hashRefreshTkn, user.UserId, user.Name, ipAddress, expiredAt); err != nil {
+		log.Printf("Failed to save refresh token for user %s: %v", user.Email, err)
 		return err
 	}
-
 	return nil
 }
