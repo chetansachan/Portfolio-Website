@@ -13,12 +13,11 @@ import (
 	"portfolio-website/internals/scripts"
 	"portfolio-website/internals/workers"
 )
- 
 
 func main() {
 	ctx := context.Background()
 	cfg := config.Load()
-	fmt.Println(cfg) 
+	fmt.Println(cfg)
 
 	if err := database.Connect(ctx, cfg); err != nil {
 		fmt.Println("Error Connecting to database")
@@ -35,8 +34,8 @@ func main() {
 	}
 
 	clientEmail := config.NewClient()
-	blogrepo := reposiotry.NewBlogRepository(database.Pool, config.NewClient())
-	worker := workers.NewNewsletterWorker(clientEmail, blogrepo)
+	newsletterRepo := reposiotry.NewNewsletterRepo(database.Pool, config.NewClient())
+	worker := workers.NewNewsletterWorker(clientEmail, newsletterRepo)
 
 	go worker.Run(ctx)
 
