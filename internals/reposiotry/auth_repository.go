@@ -4,7 +4,9 @@ import (
 	"context"
 	"log"
 	"portfolio-website/internals/model"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -39,4 +41,18 @@ func (r *AuthRepo) Login(ctx context.Context, email string) (model.User, error) 
 	}
 
 	return admin, nil
+}
+
+func (r *AuthRepo) SaveRefreshTkn(ctx context.Context, token string, userID uuid.UUID, userName string, ipAddress string, expiredAt time.Time) error {
+	query := `
+		INSERT INTO refresh_tokens (token, user_id, user_name, ip_address, expires_at)
+        VALUES ($1, $2, $3, $4);
+	`
+
+	if _, err := r.Pool.Exec(ctx, query, token, userID, userName, ipAddress, expiredAt); err != nil {
+		log.Println("Failed to save token")
+		return err
+	}
+
+	return nil
 }
