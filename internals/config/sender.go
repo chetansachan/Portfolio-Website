@@ -56,3 +56,32 @@ func (c *Client) SendBlogNotification(ctx context.Context, to string, data model
 	_, err := c.client.Emails.Send(params)
 	return err
 }
+
+func (c *Client) SendProjectNotification(ctx context.Context, to string, data model.Project) error {
+	siteURL := os.Getenv("BASE_URL")
+	if siteURL == "" {
+		siteURL = "https://yourdomain.com"
+	}
+
+	t := template.Must(template.New("project_newsletter").Parse(templates.EmailProject))
+	var buf bytes.Buffer
+
+	templateData := map[string]interface{}{
+		"Project": data,
+		"SiteURL": siteURL,
+	}
+
+	if err := t.Execute(&buf, templateData); err != nil {
+		return err
+	}
+
+	params := &resend.SendEmailRequest{
+		From:    c.From,
+		To:      []string{to},
+		Subject: "New Project: " + data.Project_Name,
+		Html:    buf.String(),
+	}
+
+	_, err := c.client.Emails.Send(params)
+	return err
+}
