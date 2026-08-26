@@ -353,7 +353,12 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 
 	var b model.Blog
 	if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
-		log.Println("Error Decoding JSON")
+		log.Printf("Error Decoding JSON: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Error Decoding JSON",
+		})
 		return
 	}
 
