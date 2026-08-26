@@ -162,7 +162,7 @@ func (c *ProjectController) GetAllProjects_Controller(w http.ResponseWriter, r *
 	response := model.PaginatedProjectResponse{
 		ProjectResponse: model.ProjectResponse{
 			Success: true,
-			Message: "Blogs Found Successfully",
+			Message: "Project Found Successfully",
 		},
 		Data: projects,
 		Meta: model.PaginationProjectMeta{
