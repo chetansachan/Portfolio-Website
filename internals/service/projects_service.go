@@ -12,10 +12,14 @@ import (
 
 type ProjectService struct {
 	ProjectRepository *reposiotry.ProjectRepository
+	NewsletterRepo    *reposiotry.NewsletterRepo
 }
 
-func NewProjectService(projectrepository *reposiotry.ProjectRepository) *ProjectService {
-	return &ProjectService{ProjectRepository: projectrepository}
+func NewProjectService(projectrepository *reposiotry.ProjectRepository, newsletterRepo *reposiotry.NewsletterRepo) *ProjectService {
+	return &ProjectService{
+		ProjectRepository: projectrepository,
+		NewsletterRepo:    newsletterRepo,
+	}
 }
 
 func (s *ProjectService) CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error) {
@@ -35,6 +39,8 @@ func (s *ProjectService) CreateProject_Service(ctx context.Context, name string,
 		log.Printf("[ERROR] database insert failed: %v", err)
 		return model.Project{}, fmt.Errorf("failed to save project: %w", err)
 	}
+
+	go s.NewsletterRepo.CreateProjectNewsletterJobs(project.Project_ID)
 
 	return project, nil
 }
