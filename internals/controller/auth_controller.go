@@ -98,3 +98,54 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 	},
 	)
 }
+
+func (c *AuthController) RefreshToken_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.LoginResponse{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	var req model.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("[WARN] Invalid JSON payload: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.LoginResponse{
+			Success: false,
+			Message: "Invalid JSON Payload",
+		})
+		return
+	}
+
+	if req.RefreshToken == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.LoginResponse{
+			Success: false,
+			Message: "Refresh token is required",
+		})
+		return
+	}
+
+	tokens, err := c.AuthService.RotateTokens_Service(r.Context(), req.RefreshToken)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(model.LoginResponse{
+			Success: false,
+			Message: "Error",
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.LoginResponseWithTkn{
+		Success: true,
+		Message: "Token refreshed successfully",
+		Token:   tokens,
+	})
+}
+

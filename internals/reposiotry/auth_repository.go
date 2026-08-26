@@ -56,3 +56,45 @@ func (r *AuthRepo) SaveRefreshTkn(ctx context.Context, token string, userID uuid
 
 	return nil
 }
+
+func (r *AuthRepo) GetRefreshToken(ctx context.Context, token string) (model.RefreshToken, error) {
+	query := `
+		SELECT id, token, user_id, user_name, is_revoked, expires_at, created_at
+		FROM refresh_tokens
+		WHERE token = $1
+	`
+	var rt model.RefreshToken
+	err := r.Pool.QueryRow(ctx, query, token).Scan(
+		&rt.ID, &rt.Token, &rt.UserID, &rt.UserName, &rt.IsRevoked, &rt.ExpiresAt, &rt.CreatedAt,
+	)
+	if err != nil {
+		return model.RefreshToken{}, err
+	}
+	return rt, nil
+}
+
+func (r *AuthRepo) DeleteRefreshTkn(ctx context.Context, token string) error {
+	query := `
+		DELETE FROM refresh_tokens
+		WHERE token = $1
+	`
+	_, err := r.Pool.Exec(ctx, query, token)
+	return err
+}
+
+func (r *AuthRepo) GetUserByID(ctx context.Context, id uuid.UUID) (model.User, error) {
+	query := `
+		SELECT id, name, email, password, is_admin, login_at
+		FROM users
+		WHERE id = $1
+	`
+	var user model.User
+	err := r.Pool.QueryRow(ctx, query, id).Scan(
+		&user.UserId, &user.Name, &user.Email, &user.Password, &user.Is_Admin, &user.Login_At,
+	)
+	if err != nil {
+		return model.User{}, err
+	}
+	return user, nil
+}
+

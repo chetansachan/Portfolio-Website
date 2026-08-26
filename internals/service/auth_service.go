@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -150,3 +151,69 @@ func (s *AuthService) SaveRefreshToken(ctx context.Context, user model.User, has
 	}
 	return nil
 }
+
+func (s *AuthService) RotateTokens_Service(ctx context.Context, refreshToken string) (model.TokenDetail, error) {
+	token, err := jwt.ParseWithClaims(refreshToken, &RefreshTokenClaims{}, func(token *jwt.Token) (any, error) {
+		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		secretStr := os.Getenv("MY_JWT_SECRETKEY")
+		if secretStr == "" {
+			return nil, fmt.Errorf("MY_JWT_SECRETKEY is not set")
+		}
+		return []byte(secretStr), nil
+	})
+
+	if err != nil || !token.Valid {
+		return model.TokenDetail{}, fmt.Errorf("invalid or expired refresh token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*RefreshTokenClaims)
+	if !ok {
+		return model.TokenDetail{}, fmt.Errorf("invalid refresh token claims")
+	}
+
+	hashedTkn := HashToken(refreshToken)
+	storedTkn, err := s.AuthRepo.GetRefreshToken(ctx, hashedTkn)
+	if err != nil {
+		return model.TokenDetail{}, fmt.Errorf("refresh token not found or already used: %w", err)
+	}
+
+	if storedTkn.IsRevoked {
+		return model.TokenDetail{}, fmt.Errorf("refresh token has been revoked")
+	}
+
+	if storedTkn.ExpiresAt.Before(time.Now()) {
+		return model.TokenDetail{}, fmt.Errorf("refresh token has expired")
+	}
+
+	userID, err := uuid.Parse(claims.UserId)
+	if err != nil {
+		return model.TokenDetail{}, fmt.Errorf("invalid user id in token: %w", err)
+	}
+
+	user, err := s.AuthRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return model.TokenDetail{}, fmt.Errorf("failed to retrieve user details: %w", err)
+	}
+
+	newAccessToken, err := s.GenerateToken(ctx, user, false)
+	if err != nil {
+		return model.TokenDetail{}, fmt.Errorf("error generating new access token: %w", err)
+	}
+
+	newRefreshToken, err := s.GenerateToken(ctx, user, true)
+	if err != nil {
+		return model.TokenDetail{}, fmt.Errorf("error generating new refresh token: %w", err)
+	}
+
+	if err := s.AuthRepo.DeleteRefreshTkn(ctx, hashedTkn); err != nil {
+		log.Printf("failed to delete old refresh token: %v", err)
+	}
+
+	return model.TokenDetail{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
+}
+
