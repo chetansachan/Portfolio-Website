@@ -35,3 +35,18 @@ type User struct {
 	Is_Admin bool      `json:"is_admin"`
 	Login_At time.Time `json:"login_at"`
 }
+
+type RefreshToken struct {
+	ID        uuid.UUID `json:"id"`
+	Token     string    `json:"token"`
+	UserID    uuid.UUID `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	IsRevoked bool      `json:"is_revoked"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
