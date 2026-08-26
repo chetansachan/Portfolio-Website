@@ -44,6 +44,8 @@ func Router() http.Handler {
 	mux.HandleFunc("POST /blog/subscribe", newsletterController.CreateSubscriber_Controller)
 	mux.HandleFunc("POST /user/registeruser", authController.RegisterUser_Controller)
 	mux.HandleFunc("GET /user/login", authController.Login_Controller)
+	mux.HandleFunc("POST /user/refresh", authController.RefreshToken_Controller)
+
 
 	return mux
 }
