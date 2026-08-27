@@ -49,7 +49,7 @@ func (r *ProjectRepository) GetAllProjects(ctx context.Context, page int, offset
 	defer rows.Close()
 
 	var projects []model.Project
-	if rows.Next() {
+	for rows.Next() {
 		var project model.Project
 		err := rows.Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Project_Slug, &project.Is_Featured, &project.Created_At)
 		if err != nil {
@@ -61,6 +61,10 @@ func (r *ProjectRepository) GetAllProjects(ctx context.Context, page int, offset
 
 	if err = rows.Err(); err != nil {
 		return nil, 0, fmt.Errorf("row loop error: %w", err)
+	}
+
+	if len(projects) == 0 {
+		return []model.Project{}, 0, model.ErrProjectNotFound
 	}
 
 	return projects, totalprojects, nil
