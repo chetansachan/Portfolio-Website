@@ -85,3 +85,33 @@ func (c *Client) SendProjectNotification(ctx context.Context, to string, data mo
 	_, err := c.client.Emails.Send(params)
 	return err
 }
+
+func (c *Client) SendCaseStudyNotification(ctx context.Context, to string, data model.Case_Study) error {
+	siteURL := os.Getenv("BASE_URL")
+	if siteURL == "" {
+		siteURL = "https://yourdomain.com"
+	}
+
+	t := template.Must(template.New("case_study_newsletter").Parse(templates.EmailCaseStudy))
+	var buf bytes.Buffer
+
+	templateData := map[string]interface{}{
+		"CaseStudy": data,
+		"SiteURL":   siteURL,
+	}
+
+	if err := t.Execute(&buf, templateData); err != nil {
+		return err
+	}
+
+	params := &resend.SendEmailRequest{
+		From:    c.From,
+		To:      []string{to},
+		Subject: "New Case Study: " + data.Case_Study_Title,
+		Html:    buf.String(),
+	}
+
+	_, err := c.client.Emails.Send(params)
+	return err
+}
+

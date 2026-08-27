@@ -7,3 +7,7 @@ var EmailNewsletter string
 
 //go:embed email_project_template.html
 var EmailProject string
+
+//go:embed email_case_study_template.html
+var EmailCaseStudy string
+
