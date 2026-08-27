@@ -9,12 +9,17 @@ import (
 	"net/http"
 	"portfolio-website/internals/model"
 	"strconv"
+
+	"github.com/google/uuid"
 )
 
 type CaseStudyServiceInterface interface {
 	CreateCaseStudy_Service(ctx context.Context, title, des, slug, content, banner string) (model.Case_Study, error)
 	GetAllCaseStudies_Service(ctx context.Context, size int, offset int) ([]model.Case_Study, int, error)
 	GetCaseStudyBySlug_Service(ctx context.Context, slug string) (model.Case_Study, error)
+	GetCaseStudyById_Service(ctx context.Context, id uuid.UUID) (model.Case_Study, error)
+	DeleteCaseStudyById_Service(ctx context.Context, id uuid.UUID) error
+	UpdateCaseStudyById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Case_Study, error)
 }
 
 type CaseStudyController struct {
@@ -81,7 +86,7 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{Success: false, Message: "Method not allowed"})
 		return
 	}
 
@@ -96,7 +101,7 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 		p, err := strconv.Atoi(pageStr)
 		if err != nil || p <= 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.Response{
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
 				Message: "Invalid 'page' parameter: must be a positive integer",
 			})
@@ -109,7 +114,7 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 		s, err := strconv.Atoi(sizeStr)
 		if err != nil || s <= 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.Response{
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
 				Message: "Invalid 'size' parameter: must be a positive integer",
 			})
@@ -172,7 +177,7 @@ func (c *CaseStudyController) GetCaseStudyBySlug_Controller(w http.ResponseWrite
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{Success: false, Message: "Method not allowed"})
 		return
 	}
 
@@ -182,21 +187,21 @@ func (c *CaseStudyController) GetCaseStudyBySlug_Controller(w http.ResponseWrite
 		switch {
 		case errors.Is(err, model.ErrSlugValidation):
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.Response{
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
 				Message: "Slug field is required",
 			})
 
 		case errors.Is(err, model.ErrCaseStudyNotFound):
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(model.Response{
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
 				Message: "Case study Not Found",
 			})
 
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(model.Response{
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
 				Message: "Internal server error. Please try again later.",
 			})
@@ -215,4 +220,176 @@ func (c *CaseStudyController) GetCaseStudyBySlug_Controller(w http.ResponseWrite
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusFound)
 	json.NewEncoder(w).Encode(response)
+}
+
+func (c *CaseStudyController) GetCaseStudyById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	myid := r.PathValue("id")
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{
+			Success: false,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	case_study, err := c.CaseStudyService.GetCaseStudyById_Service(r.Context(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrIdValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Valid ID is required",
+			})
+		case errors.Is(err, model.ErrCaseStudyNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Case study not found",
+			})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusFound)
+	json.NewEncoder(w).Encode(model.PostCaseStudyResponse{
+		CaseStudyResponse: model.CaseStudyResponse{
+			Success: true,
+			Message: "Case Study Found Successfully",
+		},
+		Data: case_study,
+	})
+}
+
+func (c *CaseStudyController) DeleteCaseStudyById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	myid := r.PathValue("id")
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{
+			Success: false,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	if err := c.CaseStudyService.DeleteCaseStudyById_Service(r.Context(), id); err != nil {
+		switch {
+		case errors.Is(err, model.ErrCaseStudyNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Case Study Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.CaseStudyResponse{
+		Success: true,
+		Message: "Case Study Deleted Successfully",
+	})
+}
+
+func (c *CaseStudyController) UpdateCaseStudyById_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPatch {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	myid := r.PathValue("id")
+	id, err := uuid.Parse(myid)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{
+			Success: false,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	var cs model.Case_Study
+	if err := json.NewDecoder(r.Body).Decode(&cs); err != nil {
+		log.Printf("Error Decoding JSON: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{
+			Success: false,
+			Message: "Error Decoding JSON",
+		})
+		return
+	}
+
+	case_study, err := c.CaseStudyService.UpdateCaseStudyById_Service(r.Context(), id, cs.Case_Study_Title, cs.Case_Study_DES, cs.Case_Study_Slug, cs.Case_Study_Content, cs.Case_Study_Banner)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrIdValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Id field is required",
+			})
+
+		case errors.Is(err, model.ErrCaseStudyNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Case Study Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.PostCaseStudyResponse{
+		CaseStudyResponse: model.CaseStudyResponse{
+			Success: true,
+			Message: "Case Study Updated Successfully",
+		},
+		Data: case_study,
+	})
 }
