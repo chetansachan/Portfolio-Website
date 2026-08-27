@@ -76,3 +76,93 @@ func (c *CaseStudyController) CreateCaseStudy_Controller(w http.ResponseWriter, 
 	})
 }
 
+func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	queryParams := r.URL.Query()
+	pageStr := queryParams.Get("page")
+	sizeStr := queryParams.Get("size")
+
+	page := 1
+	size := 10
+
+	if pageStr != "" {
+		p, err := strconv.Atoi(pageStr)
+		if err != nil || p <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid 'page' parameter: must be a positive integer",
+			})
+			return
+		}
+		page = p
+	}
+
+	if sizeStr != "" {
+		s, err := strconv.Atoi(sizeStr)
+		if err != nil || s <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid 'size' parameter: must be a positive integer",
+			})
+			return
+		}
+		if s > 100 {
+			s = 100
+		}
+		size = s
+	}
+
+	offset := (page - 1) * size
+
+	case_studies, totalCaseStudies, err := c.CaseStudyService.GetAllCaseStudies_Service(r.Context(), size, offset)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrCaseStudyNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "No Case Studies Found",
+			})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	totalPages := 0
+	if totalCaseStudies > 0 {
+		totalPages = int(math.Ceil(float64(totalCaseStudies) / float64(size)))
+	}
+
+	response := model.Case_StudyPaginatedResponse{
+		CaseStudyResponse: model.CaseStudyResponse{
+			Success: true,
+			Message: "Case Studies Found Successfully",
+		},
+		Data: case_studies,
+		Meta: model.Case_StudyPaginationMeta{
+			CurrentPage:      page,
+			PageSize:         size,
+			TotalCaseStudies: totalCaseStudies,
+			TotalPages:       totalPages,
+			HasNext:          page < totalPages,
+			HasPrev:          page > 1 && totalCaseStudies > 0,
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
