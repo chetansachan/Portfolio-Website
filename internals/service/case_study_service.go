@@ -50,3 +50,17 @@ func (s *CaseStudyService) GetAllCaseStudies_Service(ctx context.Context, limit,
 	return case_studies, totalcasestudies, nil
 }
 
+func (s *CaseStudyService) GetCaseStudyBySlug_Service(ctx context.Context, slug string) (model.Case_Study, error) {
+	if slug == "" {
+		log.Println("[WARN] validation failed")
+		return model.Case_Study{}, model.ErrSlugValidation
+	}
+
+	case_study, err := s.CaseStudyRepository.GetCaseStudyBySlug(ctx, slug)
+	if err != nil {
+		log.Printf("[ERROR] failed to get case study from database: %v", err)
+		return model.Case_Study{}, model.ErrBlogNotFound
+	}
+
+	return case_study, nil
+}
