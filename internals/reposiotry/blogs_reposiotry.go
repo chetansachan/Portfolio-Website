@@ -59,6 +59,10 @@ func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int)
 		return nil, 0, fmt.Errorf("row loop error: %w", err)
 	}
 
+	if len(blogs) == 0 {
+		return []model.Blog{}, 0, model.ErrProjectNotFound
+	}
+
 	return blogs, totalBlogs, nil
 }
 
