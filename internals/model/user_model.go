@@ -16,12 +16,6 @@ type LoginResponse struct {
 	Message string
 }
 
-type LoginResponseWithTkn struct {
-	Success bool
-	Message string
-	Token   TokenDetail
-}
-
 type GetLoginResponse struct {
 	Response LoginResponse
 	Data     User `json:"data"`
