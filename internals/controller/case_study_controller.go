@@ -166,3 +166,53 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+func (c *CaseStudyController) GetCaseStudyBySlug_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	slug := r.PathValue("slug")
+	case_study, err := c.CaseStudyService.GetCaseStudyBySlug_Service(r.Context(), slug)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrSlugValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Slug field is required",
+			})
+
+		case errors.Is(err, model.ErrCaseStudyNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Case study Not Found",
+			})
+
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	response := model.GetCaseStudyResponse{
+		CaseStudyResponse: model.CaseStudyResponse{
+			Success: true,
+			Message: "Case Study Found Successfully",
+		},
+		Data: []model.Case_Study{case_study},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusFound)
+	json.NewEncoder(w).Encode(response)
+}
