@@ -2,6 +2,8 @@ package reposiotry
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"portfolio-website/internals/model"
 
@@ -28,3 +30,38 @@ func (r *CaseStudyRepository) CreateCaseStudy(ctx context.Context, Title string,
 
 	return case_studies, nil
 }
+
+func (r *CaseStudyRepository) GetAllCaseStudies(ctx context.Context, limit int, offset int) ([]model.Case_Study, int, error) {
+	var totalCaseStudies int
+	countQuery := `SELECT COUNT(*) FROM case_studies`
+	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalCaseStudies); err != nil {
+		return nil, 0, fmt.Errorf("failed to count case studies: %w", err)
+	}
+
+	rows, err := r.Pool.Query(ctx, "SELECT * FROM case_studies ORDER BY created_at LIMIT $1 OFFSET $2", limit, offset)
+	if err != nil {
+		return []model.Case_Study{}, 0, fmt.Errorf("query error: %w", err)
+	}
+	defer rows.Close()
+
+	var case_studies []model.Case_Study
+	for rows.Next() {
+		var case_study model.Case_Study
+		if err := rows.Scan(&case_study.Case_Study_ID, &case_study.Case_Study_Title, &case_study.Case_Study_DES, &case_study.Case_Study_Slug, &case_study.Case_Study_Content, &case_study.Case_Study_Banner, &case_study.Created_At); err == sql.ErrNoRows {
+			log.Printf("Database error: %v", err)
+			return []model.Case_Study{}, 0, err
+		}
+		case_studies = append(case_studies, case_study)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("row loop error: %w", err)
+	}
+
+	if len(case_studies) == 0 {
+		return []model.Case_Study{}, 0, model.ErrCaseStudyNotFound
+	}
+
+	return case_studies, totalCaseStudies, nil
+}
+
