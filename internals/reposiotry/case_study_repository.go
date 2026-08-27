@@ -65,3 +65,19 @@ func (r *CaseStudyRepository) GetAllCaseStudies(ctx context.Context, limit int, 
 	return case_studies, totalCaseStudies, nil
 }
 
+func (r *CaseStudyRepository) GetCaseStudyBySlug(ctx context.Context, slug string) (model.Case_Study, error) {
+	query := `
+		SELECT * FROM case_studies WHERE case_study_slug = $1
+	`
+
+	var case_study model.Case_Study
+	if err := r.Pool.QueryRow(ctx, query, slug).Scan(&case_study.Case_Study_ID, &case_study.Case_Study_Title, &case_study.Case_Study_DES, &case_study.Case_Study_Slug, &case_study.Case_Study_Content, &case_study.Case_Study_Banner, &case_study.Created_At); err == sql.ErrNoRows {
+		log.Println("No Case Study found with that slug")
+		return model.Case_Study{}, err
+	} else if err != nil {
+		log.Printf("Database error: %v", err)
+		return model.Case_Study{}, err
+	}
+
+	return case_study, nil
+}
