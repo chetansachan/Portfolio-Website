@@ -25,6 +25,10 @@ func Router() http.Handler {
 	authRepo := reposiotry.NewAuthRepo(database.Pool)
 	authService := service.NewAuthService(authRepo)
 	authController := controller.NewAuthController(authService)
+	caseStudyRepo := reposiotry.NewCaseStudyRepository(database.Pool)
+	caseStudyService := service.NewCaseStudyService(caseStudyRepo, newsletterRepo)
+	caseStudyController := controller.NewCaseStudyController(caseStudyService)
+
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello")
@@ -41,6 +45,12 @@ func Router() http.Handler {
 	mux.HandleFunc("DELETE /project/deleteproject/{id}", projectController.DeleteProjectById_Controller)
 	mux.HandleFunc("PATCH /project/updateproject/{id}", projectController.UpdateProjectById_Controller)
 	mux.HandleFunc("GET /project/getallprojects", projectController.GetAllProjects_Controller)
+	mux.HandleFunc("POST /casestudy/createcasestudy", caseStudyController.CreateCaseStudy_Controller)
+	mux.HandleFunc("GET /casestudy/getallcasestudies", caseStudyController.GetAllCaseStudies_Controller)
+	mux.HandleFunc("GET /casestudy/getcasestudy/slug/{slug}", caseStudyController.GetCaseStudyBySlug_Controller)
+	mux.HandleFunc("GET /casestudy/getcasestudy/id/{id}", caseStudyController.GetCaseStudyById_Controller)
+	mux.HandleFunc("DELETE /casestudy/deletecasestudy/{id}", caseStudyController.DeleteCaseStudyById_Controller)
+	mux.HandleFunc("PATCH /casestudy/updatecasestudy/{id}", caseStudyController.UpdateCaseStudyById_Controller)
 	mux.HandleFunc("POST /subscribe", newsletterController.CreateSubscriber_Controller)
 	mux.HandleFunc("POST /user/registeruser", authController.RegisterUser_Controller)
 	mux.HandleFunc("GET /user/login", authController.Login_Controller)
