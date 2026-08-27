@@ -6,6 +6,8 @@ import (
 	"log"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
+
+	"github.com/google/uuid"
 )
 
 type CaseStudyService struct {
@@ -35,7 +37,7 @@ func (s *CaseStudyService) CreateCaseStudy_Service(ctx context.Context, title, d
 		return model.Case_Study{}, fmt.Errorf("failed to save case study: %w", err)
 	}
 
-	go s.NewsletterRepo.CreateNewsletterJobs(casestudy.Case_Study_ID)
+	go s.NewsletterRepo.CreateCaseStudyNewsletterJobs(casestudy.Case_Study_ID)
 
 	return casestudy, nil
 }
@@ -59,7 +61,72 @@ func (s *CaseStudyService) GetCaseStudyBySlug_Service(ctx context.Context, slug 
 	case_study, err := s.CaseStudyRepository.GetCaseStudyBySlug(ctx, slug)
 	if err != nil {
 		log.Printf("[ERROR] failed to get case study from database: %v", err)
-		return model.Case_Study{}, model.ErrBlogNotFound
+		return model.Case_Study{}, model.ErrCaseStudyNotFound
+	}
+
+	return case_study, nil
+}
+
+func (s *CaseStudyService) GetCaseStudyById_Service(ctx context.Context, id uuid.UUID) (model.Case_Study, error) {
+	if id == uuid.Nil {
+		log.Println("[WARN] validation failed")
+		return model.Case_Study{}, model.ErrIdValidation
+	}
+
+	case_study, err := s.CaseStudyRepository.GetCaseStudyById(ctx, id)
+	if err != nil {
+		log.Printf("[ERROR] failed to get case study from database: %v", err)
+		return model.Case_Study{}, model.ErrCaseStudyNotFound
+	}
+
+	return case_study, nil
+}
+
+func (s *CaseStudyService) DeleteCaseStudyById_Service(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return model.ErrIdValidation
+	}
+
+	if err := s.CaseStudyRepository.DeleteCaseStudyById(ctx, id); err != nil {
+		log.Printf("[ERROR] failed to delete case study: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *CaseStudyService) UpdateCaseStudyById_Service(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string) (model.Case_Study, error) {
+	if id == uuid.Nil {
+		log.Println("[WARN] validation failed")
+		return model.Case_Study{}, model.ErrIdValidation
+	}
+
+	c, err := s.CaseStudyRepository.GetCaseStudyById(ctx, id)
+	if err != nil {
+		log.Printf("[ERROR] case study not found: %v", err)
+		return model.Case_Study{}, model.ErrCaseStudyNotFound
+	}
+
+	if title == "" {
+		title = c.Case_Study_Title
+	}
+	if des == "" {
+		des = c.Case_Study_DES
+	}
+	if slug == "" {
+		slug = c.Case_Study_Slug
+	}
+	if content == "" {
+		content = c.Case_Study_Content
+	}
+	if banner == "" {
+		banner = c.Case_Study_Banner
+	}
+
+	case_study, err := s.CaseStudyRepository.UpdateCaseStudyById(ctx, id, title, des, slug, content, banner)
+	if err != nil {
+		log.Printf("[ERROR] failed to update case study: %v", err)
+		return model.Case_Study{}, model.ErrCaseStudyNotFound
 	}
 
 	return case_study, nil
