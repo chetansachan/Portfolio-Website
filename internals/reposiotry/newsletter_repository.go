@@ -26,6 +26,7 @@ func (r *NewsletterRepo) ProcessPendingJobs(ctx context.Context) {
 	var jobID uuid.UUID
 	var blogID *uuid.UUID
 	var projectID *uuid.UUID
+	var caseStudyID *uuid.UUID
 	var subscriberIDs []uuid.UUID
 
 	err := r.Pool.QueryRow(ctx, `
@@ -38,8 +39,8 @@ func (r *NewsletterRepo) ProcessPendingJobs(ctx context.Context) {
 			FOR UPDATE SKIP LOCKED
 			LIMIT 1
 		)
-		RETURNING id, blog_id, project_id, subscribers_group
-	`).Scan(&jobID, &blogID, &projectID, &subscriberIDs)
+		RETURNING id, blog_id, project_id, case_study_id, subscribers_group
+	`).Scan(&jobID, &blogID, &projectID, &caseStudyID, &subscriberIDs)
 
 	if err == pgx.ErrNoRows {
 		return
@@ -130,6 +131,35 @@ func (r *NewsletterRepo) ProcessPendingJobs(ctx context.Context) {
 				Project_Name: projectName,
 				Project_Slug: projectSlug,
 				Project_DES:  projectSummary,
+			})
+			if err != nil {
+				fmt.Printf("Failed to send to %s: %v\n", emailAddr, err)
+			}
+		}
+	} else if caseStudyID != nil {
+		var caseStudyTitle, caseStudySlug, caseStudyDES string
+		err = r.Pool.QueryRow(ctx, `
+			SELECT case_study_title, case_study_slug, case_study_des 
+			FROM case_studies 
+			WHERE case_study_id = $1
+		`, *caseStudyID).Scan(&caseStudyTitle, &caseStudySlug, &caseStudyDES)
+		if err != nil {
+			fmt.Println("Failed to fetch case study:", err)
+			r.Pool.Exec(ctx, `UPDATE newsletter_jobs SET status = 'failed' WHERE id = $1`, jobID)
+			return
+		}
+
+		for _, emailAddr := range emails {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(100 * time.Millisecond):
+			}
+
+			err := r.Email.SendCaseStudyNotification(ctx, emailAddr, model.Case_Study{
+				Case_Study_Title: caseStudyTitle,
+				Case_Study_Slug:  caseStudySlug,
+				Case_Study_DES:   caseStudyDES,
 			})
 			if err != nil {
 				fmt.Printf("Failed to send to %s: %v\n", emailAddr, err)
@@ -239,6 +269,53 @@ func (r *NewsletterRepo) CreateProjectNewsletterJobs(projectId uuid.UUID) {
 
 	fmt.Printf("created %d newsletter jobs for project %s\n",
 		(len(allSubscriberIDs)+batchSize-1)/batchSize, projectId)
+}
+
+func (r *NewsletterRepo) CreateCaseStudyNewsletterJobs(caseStudyId uuid.UUID) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	rows, err := r.Pool.Query(ctx, `
+		SELECT id FROM subscribers WHERE is_active = true
+	`)
+	if err != nil {
+		fmt.Println("failed to fetch subscribers:", err)
+		return
+	}
+
+	var allSubscriberIDs []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			continue
+		}
+		allSubscriberIDs = append(allSubscriberIDs, id)
+	}
+	rows.Close()
+
+	if len(allSubscriberIDs) == 0 {
+		return
+	}
+
+	batchSize := 100
+	for i := 0; i < len(allSubscriberIDs); i += batchSize {
+		end := i + batchSize
+		if end > len(allSubscriberIDs) {
+			end = len(allSubscriberIDs)
+		}
+		batch := allSubscriberIDs[i:end]
+
+		_, err := r.Pool.Exec(ctx, `
+			INSERT INTO newsletter_jobs (case_study_id, subscribers_group, status)
+			VALUES ($1, $2, 'pending')
+		`, caseStudyId, batch)
+		if err != nil {
+			fmt.Printf("failed to insert case study job batch %d: %v\n", i/batchSize, err)
+		}
+	}
+
+	fmt.Printf("created %d newsletter jobs for case study %s\n",
+		(len(allSubscriberIDs)+batchSize-1)/batchSize, caseStudyId)
 }
 
 func (r *NewsletterRepo) CreateSubscriber(ctx context.Context, email string) error {
