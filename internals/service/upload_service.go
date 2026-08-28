@@ -81,7 +81,6 @@ func Upload_Service(ctx context.Context, base64 string) error {
 	folder := "data/uploads/"
 	filename := id + "." + string(extractedExt)
 	if err := os.WriteFile(folder+filename, data, 0666); err != nil {
-		fmt.Println(err)
 		return fmt.Errorf("Error writing file")
 	}
 

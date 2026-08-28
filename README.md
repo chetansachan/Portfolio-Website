@@ -1,6 +1,8 @@
 docker run command
 
 ```
+docker build -t myapp .
+
  docker run --rm -p 8080:8080 --env-file .env -e LOCAL_SYSTEM_DB=false myapp
 ```
 

@@ -17,6 +17,7 @@ RUN adduser -D appuser
 WORKDIR /app
 COPY --from=build /app/out .
 COPY --from=build /app/migration ./migration
+RUN mkdir -p data/uploads && chown -R appuser:appuser /app
 ENV LOCAL_SYSTEM_DB=false
 USER appuser
 EXPOSE 8080
