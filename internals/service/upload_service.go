@@ -85,15 +85,15 @@ func Upload_Service(ctx context.Context, base64 string) (string, error) {
 		return "", fmt.Errorf("Error writing file")
 	}
 
-	var Url string
+	var baseUrl string
 	isProduction, _ := strconv.ParseBool(os.Getenv("ISPRODUCTION"))
-	if !isProduction {
-		Url = "https://portfolio-website-production-bddb.up.railway.app"
+	if isProduction {
+		baseUrl = "https://portfolio-website-production-bddb.up.railway.app"
 	} else {
-		Url = "http://localhost:8080"
+		baseUrl = "http://localhost:8080"
 	}
 
-	return Url, nil
+	return baseUrl, nil
 }
 
 func FindFile_Service(ctx context.Context, filename string) (string, error) {
