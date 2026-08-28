@@ -93,7 +93,9 @@ func Upload_Service(ctx context.Context, base64 string) (string, error) {
 		baseUrl = "http://localhost:8080"
 	}
 
-	return baseUrl, nil
+	fileUrl := baseUrl + "/files/" + filename
+
+	return fileUrl, nil
 }
 
 func FindFile_Service(ctx context.Context, filename string) (string, error) {
