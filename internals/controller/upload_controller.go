@@ -11,6 +11,12 @@ type Upload struct {
 	File string `json:"file"`
 }
 
+type UploadResponse struct {
+	Success bool
+	Message string
+	Url     string
+}
+
 func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -23,8 +29,8 @@ func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var url Upload
-	err := json.NewDecoder(r.Body).Decode(&url)
+	var file Upload
+	err := json.NewDecoder(r.Body).Decode(&file)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.Response{
@@ -34,7 +40,8 @@ func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err2 := service.Upload_Service(r.Context(), url.File); err2 != nil {
+	url, err := service.Upload_Service(r.Context(), file.File)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
@@ -44,9 +51,10 @@ func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(model.Response{
+	json.NewEncoder(w).Encode(UploadResponse{
 		Success: true,
 		Message: "File Uploaded",
+		Url:     url,
 	})
 }
 
