@@ -55,6 +55,8 @@ func Router() http.Handler {
 	mux.HandleFunc("POST /user/registeruser", authController.RegisterUser_Controller)
 	mux.HandleFunc("GET /user/login", authController.Login_Controller)
 	mux.HandleFunc("POST /user/refresh", authController.RefreshToken_Controller)
+	mux.HandleFunc("POST /upload", controller.Upload_Controller)
+	mux.HandleFunc("GET /files/{file}", controller.FindFile_Controller)
 
 
 	return mux
