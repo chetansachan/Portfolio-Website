@@ -19,7 +19,7 @@ func NewCaseStudyService(caseStudyRepo *reposiotry.CaseStudyRepository, newslett
 	return &CaseStudyService{CaseStudyRepository: caseStudyRepo, NewsletterRepo: newsletterRepo}
 }
 
-func (s *CaseStudyService) CreateCaseStudy_Service(ctx context.Context, title, des, slug, content, banner string) (model.Case_Study, error) {
+func (s *CaseStudyService) CreateCaseStudy_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Case_Study, error) {
 	if title == "" || des == "" || slug == "" || content == "" || banner == "" {
 		log.Println("[WARN] validation failed")
 		return model.Case_Study{}, model.ErrValidation
@@ -31,7 +31,7 @@ func (s *CaseStudyService) CreateCaseStudy_Service(ctx context.Context, title, d
 		return c, model.ErrCaseStudyAlreadyExist
 	}
 
-	casestudy, err := s.CaseStudyRepository.CreateCaseStudy(ctx, title, des, slug, content, banner)
+	casestudy, err := s.CaseStudyRepository.CreateCaseStudy(ctx, title, des, slug, content, banner, featured)
 	if err != nil {
 		log.Printf("[ERROR] database insert failed: %v", err)
 		return model.Case_Study{}, fmt.Errorf("failed to save case study: %w", err)
@@ -95,7 +95,7 @@ func (s *CaseStudyService) DeleteCaseStudyById_Service(ctx context.Context, id u
 	return nil
 }
 
-func (s *CaseStudyService) UpdateCaseStudyById_Service(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string) (model.Case_Study, error) {
+func (s *CaseStudyService) UpdateCaseStudyById_Service(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string, featured bool) (model.Case_Study, error) {
 	if id == uuid.Nil {
 		log.Println("[WARN] validation failed")
 		return model.Case_Study{}, model.ErrIdValidation
@@ -123,11 +123,20 @@ func (s *CaseStudyService) UpdateCaseStudyById_Service(ctx context.Context, id u
 		banner = c.Case_Study_Banner
 	}
 
-	case_study, err := s.CaseStudyRepository.UpdateCaseStudyById(ctx, id, title, des, slug, content, banner)
+	case_study, err := s.CaseStudyRepository.UpdateCaseStudyById(ctx, id, title, des, slug, content, banner, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to update case study: %v", err)
 		return model.Case_Study{}, model.ErrCaseStudyNotFound
 	}
 
 	return case_study, nil
+}
+
+func (s *CaseStudyService) GetFeaturedCaseStudies_Service(ctx context.Context) ([]model.Case_Study, error) {
+	caseStudies, err := s.CaseStudyRepository.GetFeaturedCaseStudies(ctx)
+	if err != nil {
+		log.Printf("[ERROR] failed to get featured case studies from database: %v", err)
+		return []model.Case_Study{}, model.ErrCaseStudyNotFound
+	}
+	return caseStudies, nil
 }

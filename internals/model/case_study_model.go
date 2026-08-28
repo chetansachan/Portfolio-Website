@@ -43,5 +43,6 @@ type Case_Study struct {
 	Case_Study_Content string    `json:"case_study_content"`
 	Case_Study_Slug    string    `json:"case_study_slug"`
 	Case_Study_Banner  string    `json:"case_study_banner"`
+	Is_Featured        bool      `json:"is_featured"`
 	Created_At         time.Time `json:"created_at"`
 }

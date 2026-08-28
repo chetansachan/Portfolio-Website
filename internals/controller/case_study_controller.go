@@ -14,12 +14,13 @@ import (
 )
 
 type CaseStudyServiceInterface interface {
-	CreateCaseStudy_Service(ctx context.Context, title, des, slug, content, banner string) (model.Case_Study, error)
+	CreateCaseStudy_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Case_Study, error)
 	GetAllCaseStudies_Service(ctx context.Context, size int, offset int) ([]model.Case_Study, int, error)
 	GetCaseStudyBySlug_Service(ctx context.Context, slug string) (model.Case_Study, error)
 	GetCaseStudyById_Service(ctx context.Context, id uuid.UUID) (model.Case_Study, error)
 	DeleteCaseStudyById_Service(ctx context.Context, id uuid.UUID) error
-	UpdateCaseStudyById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Case_Study, error)
+	UpdateCaseStudyById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string, featured bool) (model.Case_Study, error)
+	GetFeaturedCaseStudies_Service(ctx context.Context) ([]model.Case_Study, error)
 }
 
 type CaseStudyController struct {
@@ -47,7 +48,7 @@ func (c *CaseStudyController) CreateCaseStudy_Controller(w http.ResponseWriter, 
 		return
 	}
 
-	case_study, err := c.CaseStudyService.CreateCaseStudy_Service(r.Context(), cs.Case_Study_Title, cs.Case_Study_DES, cs.Case_Study_Slug, cs.Case_Study_Content, cs.Case_Study_Banner)
+	case_study, err := c.CaseStudyService.CreateCaseStudy_Service(r.Context(), cs.Case_Study_Title, cs.Case_Study_DES, cs.Case_Study_Slug, cs.Case_Study_Content, cs.Case_Study_Banner, cs.Is_Featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrValidation):
@@ -356,7 +357,7 @@ func (c *CaseStudyController) UpdateCaseStudyById_Controller(w http.ResponseWrit
 		return
 	}
 
-	case_study, err := c.CaseStudyService.UpdateCaseStudyById_Service(r.Context(), id, cs.Case_Study_Title, cs.Case_Study_DES, cs.Case_Study_Slug, cs.Case_Study_Content, cs.Case_Study_Banner)
+	case_study, err := c.CaseStudyService.UpdateCaseStudyById_Service(r.Context(), id, cs.Case_Study_Title, cs.Case_Study_DES, cs.Case_Study_Slug, cs.Case_Study_Content, cs.Case_Study_Banner, cs.Is_Featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrIdValidation):
@@ -391,5 +392,43 @@ func (c *CaseStudyController) UpdateCaseStudyById_Controller(w http.ResponseWrit
 			Message: "Case Study Updated Successfully",
 		},
 		Data: case_study,
+	})
+}
+
+func (c *CaseStudyController) GetFeaturedCaseStudies_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.CaseStudyResponse{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	caseStudies, err := c.CaseStudyService.GetFeaturedCaseStudies_Service(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrCaseStudyNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "No Featured Case Studies Found",
+			})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.CaseStudyResponse{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.GetCaseStudyResponse{
+		CaseStudyResponse: model.CaseStudyResponse{
+			Success: true,
+			Message: "Featured case studies retrieved successfully",
+		},
+		Data: caseStudies,
 	})
 }
