@@ -190,7 +190,12 @@ func TestUpdateBlogById_Controller(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockService := &MockBlogService{
-				UpdateBlogFunc: tt.updateFunc,
+				UpdateBlogFunc: func(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string, featured bool) (model.Blog, error) {
+					if tt.updateFunc == nil {
+						return model.Blog{}, nil
+					}
+					return tt.updateFunc(ctx, id, title, des, slug, content, banner)
+				},
 			}
 			blogController := controller.NewBlogController(mockService)
 

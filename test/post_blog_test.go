@@ -338,7 +338,12 @@ func TestPostBlog_Controller(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// --- Setup mock ---
 			mockService := &MockBlogService{
-				PostFunc: tt.postFunc,
+				PostFunc: func(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error) {
+					if tt.postFunc == nil {
+						return model.Blog{}, nil
+					}
+					return tt.postFunc(ctx, title, des, slug, content, banner)
+				},
 			}
 			blogController := controller.NewBlogController(mockService)
 

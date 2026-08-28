@@ -12,22 +12,22 @@ import (
 // =============================================================================
 
 type MockBlogService struct {
-	CreateBlogFunc    func(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
+	CreateBlogFunc    func(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error)
 	GetAllBlogsFunc   func(ctx context.Context, size int, offset int) ([]model.Blog, int, error)
 	GetBlogBySlugFunc func(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogByIdFunc   func(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogFunc    func(ctx context.Context, id uuid.UUID) error
-	UpdateBlogFunc    func(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Blog, error)
-	PostFunc   func(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
+	UpdateBlogFunc    func(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string, featured bool) (model.Blog, error)
+	PostFunc   func(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error)
 	DeleteFunc func(ctx context.Context, id uuid.UUID) error
 }
 
-func (m *MockBlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
+func (m *MockBlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error) {
 	if m.CreateBlogFunc != nil {
-		return m.CreateBlogFunc(ctx, title, des, slug, content, banner)
+		return m.CreateBlogFunc(ctx, title, des, slug, content, banner, featured)
 	}
 	if m.PostFunc != nil {
-		return m.PostFunc(ctx, title, des, slug, content, banner)
+		return m.PostFunc(ctx, title, des, slug, content, banner, featured)
 	}
 	return model.Blog{}, nil
 }
@@ -63,11 +63,15 @@ func (m *MockBlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UU
 	return nil
 }
 
-func (m *MockBlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Blog, error) {
+func (m *MockBlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string, featured bool) (model.Blog, error) {
 	if m.UpdateBlogFunc != nil {
-		return m.UpdateBlogFunc(ctx, id, title, des, slug, content, banner)
+		return m.UpdateBlogFunc(ctx, id, title, des, slug, content, banner, featured)
 	}
 	return model.Blog{}, nil
+}
+
+func (m *MockBlogService) GetFeaturedBlogs_Service(ctx context.Context) ([]model.Blog, error) {
+	return nil, nil
 }
 
 // =============================================================================
@@ -123,4 +127,8 @@ func (m *MockProjectService) UpdateProjectById_Service(ctx context.Context, id u
 		return m.UpdateProjectFunc(ctx, id, name, des, content, banner, slug, featured)
 	}
 	return model.Project{}, nil
+}
+
+func (m *MockProjectService) GetFeaturedProjects_Service(ctx context.Context) ([]model.Project, error) {
+	return nil, nil
 }
