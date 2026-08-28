@@ -12,4 +12,5 @@ var (
 	ErrProjectAlreadyExist = errors.New("Project already exist")
 	ErrCaseStudyNotFound     = errors.New("Case Study not found")
 	ErrCaseStudyAlreadyExist = errors.New("Case Study already exist")
+	ErrFileNotFound          = errors.New("File not found")
 )

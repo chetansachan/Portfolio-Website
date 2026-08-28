@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
@@ -17,7 +18,15 @@ type UploadResponse struct {
 	Url     string
 }
 
-func Upload_Controller(w http.ResponseWriter, r *http.Request) {
+type UploadController struct {
+	UploadService *service.UploadService
+}
+
+func NewUploadController(uploadService *service.UploadService) *UploadController {
+	return &UploadController{UploadService: uploadService}
+}
+
+func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
@@ -40,7 +49,7 @@ func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := service.Upload_Service(r.Context(), file.File)
+	url, err := c.UploadService.Upload_Service(r.Context(), file.File)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.Response{
@@ -58,7 +67,7 @@ func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func FindFile_Controller(w http.ResponseWriter, r *http.Request) {
+func (c *UploadController) FindFile_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -71,7 +80,7 @@ func FindFile_Controller(w http.ResponseWriter, r *http.Request) {
 
 	fileName := r.PathValue("file")
 
-	filePath, err2 := service.FindFile_Service(r.Context(), fileName)
+	filePath, err2 := c.UploadService.FindFile_Service(r.Context(), fileName)
 	if err2 != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
@@ -83,4 +92,43 @@ func FindFile_Controller(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, filePath)
+}
+
+func (c *UploadController) DeleteFile_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	fileName := r.PathValue("file")
+	err := c.UploadService.DeleteFile_Service(r.Context(), fileName)
+	if err != nil {
+		if errors.Is(err, model.ErrFileNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "File Not Exist",
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Internal server error. Please try again later.",
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.Response{
+		Success: true,
+		Message: "File Deleted Successfully",
+	})
 }

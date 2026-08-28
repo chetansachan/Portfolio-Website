@@ -5,6 +5,7 @@ import (
 	Base64 "encoding/base64"
 	"fmt"
 	"os"
+	"portfolio-website/internals/reposiotry"
 	"regexp"
 	"strconv"
 
@@ -40,7 +41,15 @@ var validExtensions = map[AllowedExtension]bool{
 	ExtGIF:  true,
 }
 
-func Upload_Service(ctx context.Context, base64 string) (string, error) {
+type UploadService struct {
+	UploadRepo *reposiotry.UploadRepo
+}
+
+func NewUploadService(uploadRepo *reposiotry.UploadRepo) *UploadService {
+	return &UploadService{UploadRepo: uploadRepo}
+}
+
+func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (string, error) {
 	re1 := regexp.MustCompile(`^data:(?P<type>[\w/+-]+);base64,(?P<string>.+)$`)
 	matches := re1.FindStringSubmatch(base64)
 
@@ -85,6 +94,10 @@ func Upload_Service(ctx context.Context, base64 string) (string, error) {
 		return "", fmt.Errorf("Error writing file")
 	}
 
+	if err := s.UploadRepo.SaveFiles(ctx, filename, string(extractedExt), mimeType); err != nil {
+		return "", fmt.Errorf("Error Saving File into Data base")
+	}
+
 	var baseUrl string
 	isProduction, _ := strconv.ParseBool(os.Getenv("ISPRODUCTION"))
 	if isProduction {
@@ -98,7 +111,7 @@ func Upload_Service(ctx context.Context, base64 string) (string, error) {
 	return fileUrl, nil
 }
 
-func FindFile_Service(ctx context.Context, filename string) (string, error) {
+func (s *UploadService) FindFile_Service(ctx context.Context, filename string) (string, error) {
 	filePath := "data/uploads/" + filename
 	_, err := os.Stat(filePath)
 	if err != nil {
@@ -106,4 +119,18 @@ func FindFile_Service(ctx context.Context, filename string) (string, error) {
 	}
 
 	return filePath, nil
+}
+
+func (s *UploadService) DeleteFile_Service(ctx context.Context, filename string) error {
+	err := s.UploadRepo.DeleteFileByName(ctx, filename)
+	if err != nil {
+		return fmt.Errorf("failed to delete file from database")
+	}
+
+	filePath := "data/uploads/" + filename
+	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete file from disk")
+	}
+
+	return nil
 }

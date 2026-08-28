@@ -28,6 +28,9 @@ func Router() http.Handler {
 	caseStudyRepo := reposiotry.NewCaseStudyRepository(database.Pool)
 	caseStudyService := service.NewCaseStudyService(caseStudyRepo, newsletterRepo)
 	caseStudyController := controller.NewCaseStudyController(caseStudyService)
+	uploadRepo := reposiotry.NewUploadRepo(database.Pool)
+	uploadService := service.NewUploadService(uploadRepo)
+	uploadController := controller.NewUploadController(uploadService)
 
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +38,7 @@ func Router() http.Handler {
 	})
 	mux.HandleFunc("POST /blog/createblog", blogController.CreateBlog_Controller)
 	mux.HandleFunc("GET /blog/getallblogs", blogController.GetAllBlogs_Controller)
+	mux.HandleFunc("GET /blog/featured", blogController.GetFeaturedBlogs_Controller)
 	mux.HandleFunc("GET /blog/getblog/slug/{slug}", blogController.GetBlogBySlug_Controller)
 	mux.HandleFunc("GET /blog/getblog/id/{id}", blogController.GetBlogById_Controller)
 	mux.HandleFunc("DELETE /blog/deleteblog/{id}", blogController.DeleteBlogById_Controller)
@@ -45,8 +49,10 @@ func Router() http.Handler {
 	mux.HandleFunc("DELETE /project/deleteproject/{id}", projectController.DeleteProjectById_Controller)
 	mux.HandleFunc("PATCH /project/updateproject/{id}", projectController.UpdateProjectById_Controller)
 	mux.HandleFunc("GET /project/getallprojects", projectController.GetAllProjects_Controller)
+	mux.HandleFunc("GET /project/featured", projectController.GetFeaturedProjects_Controller)
 	mux.HandleFunc("POST /casestudy/createcasestudy", caseStudyController.CreateCaseStudy_Controller)
 	mux.HandleFunc("GET /casestudy/getallcasestudies", caseStudyController.GetAllCaseStudies_Controller)
+	mux.HandleFunc("GET /casestudy/featured", caseStudyController.GetFeaturedCaseStudies_Controller)
 	mux.HandleFunc("GET /casestudy/getcasestudy/slug/{slug}", caseStudyController.GetCaseStudyBySlug_Controller)
 	mux.HandleFunc("GET /casestudy/getcasestudy/id/{id}", caseStudyController.GetCaseStudyById_Controller)
 	mux.HandleFunc("DELETE /casestudy/deletecasestudy/{id}", caseStudyController.DeleteCaseStudyById_Controller)
@@ -55,8 +61,9 @@ func Router() http.Handler {
 	mux.HandleFunc("POST /user/registeruser", authController.RegisterUser_Controller)
 	mux.HandleFunc("GET /user/login", authController.Login_Controller)
 	mux.HandleFunc("POST /user/refresh", authController.RefreshToken_Controller)
-	mux.HandleFunc("POST /upload", controller.Upload_Controller)
-	mux.HandleFunc("GET /files/{file}", controller.FindFile_Controller)
+	mux.HandleFunc("POST /upload", uploadController.Upload_Controller)
+	mux.HandleFunc("GET /files/{file}", uploadController.FindFile_Controller)
+	mux.HandleFunc("DELETE /deletefiles/{file}", uploadController.DeleteFile_Controller)
 
 
 	return mux
