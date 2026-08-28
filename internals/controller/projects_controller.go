@@ -20,6 +20,7 @@ type ProjectServiceInterface interface {
 	GetProjectBySlug_Service(ctx context.Context, slug string) (model.Project, error)
 	DeleteProjectById_Service(ctx context.Context, id uuid.UUID) error
 	UpdateProjectById_Service(ctx context.Context, id uuid.UUID, name string, des string, content string, banner string, slug string, featured bool) (model.Project, error)
+	GetFeaturedProjects_Service(ctx context.Context) ([]model.Project, error)
 }
 
 type ProjectController struct {
@@ -397,5 +398,46 @@ func (c *ProjectController) UpdateProjectById_Controller(w http.ResponseWriter, 
 			Message: "Project Updated Successfully",
 		},
 		Data: project,
+	})
+}
+
+func (c *ProjectController) GetFeaturedProjects_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	projects, err := c.ProjectService.GetFeaturedProjects_Service(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrProjectNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "No Featured Projects Found",
+			})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.GetProjectResponse{
+		ProjectResponse: model.ProjectResponse{
+			Success: true,
+			Message: "Featured projects retrieved successfully",
+		},
+		Data: projects,
 	})
 }

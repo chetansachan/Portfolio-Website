@@ -135,3 +135,12 @@ func (s *ProjectService) UpdateProjectById_Service(ctx context.Context, id uuid.
 
 	return project, nil
 }
+
+func (s *ProjectService) GetFeaturedProjects_Service(ctx context.Context) ([]model.Project, error) {
+	projects, err := s.ProjectRepository.GetFeaturedProjects(ctx)
+	if err != nil {
+		log.Printf("[ERROR] failed to get featured projects from database: %v", err)
+		return []model.Project{}, model.ErrProjectNotFound
+	}
+	return projects, nil
+}
