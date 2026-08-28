@@ -18,12 +18,13 @@ import (
 // The controller depends on this interface (not the concrete service),
 // enabling unit testing with mocks.
 type BlogServiceInterface interface {
-	CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error)
+	CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error)
 	GetAllBlogs_Service(ctx context.Context, size int, offset int) ([]model.Blog, int, error)
 	GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error
-	UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string) (model.Blog, error)
+	UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string, featured bool) (model.Blog, error)
+	GetFeaturedBlogs_Service(ctx context.Context) ([]model.Blog, error)
 }
 
 type BlogController struct {
@@ -51,7 +52,7 @@ func (c *BlogController) CreateBlog_Controller(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	blog, err := c.BlogService.CreateBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	blog, err := c.BlogService.CreateBlog_Service(r.Context(), b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner, b.Is_Featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrValidation):
@@ -362,7 +363,7 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 		return
 	}
 
-	blog, err := c.BlogService.UpdateBlogById_Service(r.Context(), id, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner)
+	blog, err := c.BlogService.UpdateBlogById_Service(r.Context(), id, b.Blog_Title, b.Blog_DES, b.Blog_Slug, b.Blog_Content, b.Blog_Banner, b.Is_Featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrIdValidation):
@@ -397,5 +398,43 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 			Message: "Blog Updated Successfully",
 		},
 		Data: blog,
+	})
+}
+
+func (c *BlogController) GetFeaturedBlogs_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
+		return
+	}
+
+	blogs, err := c.BlogService.GetFeaturedBlogs_Service(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrBlogNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "No Featured Blogs Found",
+			})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal server error. Please try again later.",
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.GetBlogsResponse{
+		Response: model.Response{
+			Success: true,
+			Message: "Featured blogs retrieved successfully",
+		},
+		Data: blogs,
 	})
 }

@@ -43,5 +43,6 @@ type Blog struct {
 	Blog_Content string    `json:"blog_content"`
 	Blog_Slug    string    `json:"blog_slug"`
 	Blog_Banner  string    `json:"blog_banner"`
+	Is_Featured  bool      `json:"is_featured"`
 	Created_At   time.Time `json:"created_at"`
 }

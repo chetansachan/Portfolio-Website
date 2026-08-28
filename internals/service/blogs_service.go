@@ -19,7 +19,7 @@ func NewBlogService(blogRepo *reposiotry.BlogRepository, newsletterRepo *reposio
 	return &BlogService{BlogRepository: blogRepo, NewsletterRepo: newsletterRepo}
 }
 
-func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
+func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error) {
 	if title == "" || des == "" || slug == "" || content == "" || banner == "" {
 		log.Println("[WARN] validation failed")
 		return model.Blog{}, model.ErrValidation
@@ -31,7 +31,7 @@ func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, 
 		return b, model.ErrBlogAlreadyExist
 	}
 
-	blog, err := s.BlogRepository.CreateBlog(ctx, title, des, slug, content, banner)
+	blog, err := s.BlogRepository.CreateBlog(ctx, title, des, slug, content, banner, featured)
 	if err != nil {
 		log.Printf("[ERROR] database insert failed: %v", err)
 		return model.Blog{}, fmt.Errorf("failed to save blog: %w", err)
@@ -95,7 +95,7 @@ func (s *BlogService) DeleteBlogById_Service(ctx context.Context, id uuid.UUID) 
 	return nil
 }
 
-func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string) (model.Blog, error) {
+func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title string, des string, slug string, content string, banner string, featured bool) (model.Blog, error) {
 	if id == uuid.Nil {
 		log.Println("[WARN] validation failed")
 		return model.Blog{}, model.ErrIdValidation
@@ -123,11 +123,20 @@ func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, 
 		banner = b.Blog_Banner
 	}
 
-	blog, err := s.BlogRepository.UpdateBlogById(ctx, id, title, des, slug, content, banner)
+	blog, err := s.BlogRepository.UpdateBlogById(ctx, id, title, des, slug, content, banner, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to update blog from database: %v", err)
 		return model.Blog{}, model.ErrBlogNotFound
 	}
 
 	return blog, nil
+}
+
+func (s *BlogService) GetFeaturedBlogs_Service(ctx context.Context) ([]model.Blog, error) {
+	blogs, err := s.BlogRepository.GetFeaturedBlogs(ctx)
+	if err != nil {
+		log.Printf("[ERROR] failed to get featured blogs from database: %v", err)
+		return []model.Blog{}, model.ErrBlogNotFound
+	}
+	return blogs, nil
 }
