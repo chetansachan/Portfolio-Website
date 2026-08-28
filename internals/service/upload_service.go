@@ -4,10 +4,8 @@ import (
 	"context"
 	Base64 "encoding/base64"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
-	"strings"
 
 	"github.com/google/uuid"
 )
@@ -90,16 +88,12 @@ func Upload_Service(ctx context.Context, base64 string) error {
 	return nil
 }
 
-func FindFile_Service(ctx context.Context, filename string) error {
-	filenameWithoutExt := strings.TrimSuffix(filename, ".")
-
-	file, err := os.OpenFile(filenameWithoutExt, os.O_RDWR|os.O_CREATE, 0644)
+func FindFile_Service(ctx context.Context, filename string) (string, error) {
+	filePath := "data/uploads/" + filename
+	_, err := os.Stat(filePath)
 	if err != nil {
-		return fmt.Errorf("File Not Exist")
-	}
-	if err := file.Close(); err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("file not found: %w", err)
 	}
 
-	return nil
+	return filePath, nil
 }

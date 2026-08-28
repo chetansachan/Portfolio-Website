@@ -8,7 +8,7 @@ import (
 )
 
 type Upload struct {
-	Url string `json:"url"`
+	File string `json:"file"`
 }
 
 func Upload_Controller(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +34,7 @@ func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err2 := service.Upload_Service(r.Context(), url.Url); err2 != nil {
+	if err2 := service.Upload_Service(r.Context(), url.File); err2 != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
@@ -51,9 +51,8 @@ func Upload_Controller(w http.ResponseWriter, r *http.Request) {
 }
 
 func FindFile_Controller(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
@@ -64,8 +63,10 @@ func FindFile_Controller(w http.ResponseWriter, r *http.Request) {
 
 	fileName := r.PathValue("file")
 
-	if err2 := service.FindFile_Service(r.Context(),fileName); err2 != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	filePath, err2 := service.FindFile_Service(r.Context(), fileName)
+	if err2 != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
 			Message: "File Not Exist",
@@ -73,9 +74,5 @@ func FindFile_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(model.Response{
-		Success: true,
-		Message: "File Found Successfully",
-	})
+	http.ServeFile(w, r, filePath)
 }
