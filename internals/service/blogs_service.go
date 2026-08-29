@@ -42,7 +42,7 @@ func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, 
 	return blog, nil
 }
 
-func (s *BlogService) GetAllBlogs_Service(ctx context.Context, limit, offset int, featured bool) ([]model.Blog, int, error) {
+func (s *BlogService) GetAllBlogs_Service(ctx context.Context, limit, offset int, featured *bool) ([]model.Blog, int, error) {
 	blogs, totalblogs, err := s.BlogRepository.GetAllBlogs(ctx, limit, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get blogs from database: %v", err)

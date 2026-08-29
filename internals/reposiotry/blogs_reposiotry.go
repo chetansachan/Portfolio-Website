@@ -32,17 +32,17 @@ func (r *BlogRepository) CreateBlog(ctx context.Context, Blog_Title string, Blog
 	return blog, nil
 }
 
-func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int, featured bool) ([]model.Blog, int, error) {
+func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int, featured *bool) ([]model.Blog, int, error) {
 	var totalBlogs int
-	countQuery := `SELECT COUNT(*) FROM blogs`
-	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalBlogs); err != nil {
+	countQuery := `SELECT COUNT(*) FROM blogs WHERE ($1::boolean IS NULL OR is_featured = $1)`
+	if err := r.Pool.QueryRow(ctx, countQuery, featured).Scan(&totalBlogs); err != nil {
 		return nil, 0, fmt.Errorf("failed to count blogs: %w", err)
 	}
 
 	query := `
 		SELECT blog_id, blog_title, blog_des, blog_slug, blog_content, blog_banner, is_featured, created_at 
 		FROM blogs 
-		WHERE is_featured = $1 
+		WHERE ($1::boolean IS NULL OR is_featured = $1)
 		ORDER BY created_at DESC 
 		LIMIT $2 OFFSET $3
 	`
@@ -53,7 +53,7 @@ func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int,
 	}
 	defer rows.Close()
 
-	var blogs []model.Blog
+	blogs := []model.Blog{}
 	for rows.Next() {
 		var blog model.Blog
 		err := rows.Scan(

@@ -19,7 +19,7 @@ import (
 // enabling unit testing with mocks.
 type BlogServiceInterface interface {
 	CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error)
-	GetAllBlogs_Service(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error)
+	GetAllBlogs_Service(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error)
 	GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error
@@ -97,11 +97,13 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 	queryParams := r.URL.Query()
 	pageStr := queryParams.Get("page")
 	sizeStr := queryParams.Get("size")
-	value := queryParams.Get("featured")
-	if value == "" {
-		value = "false"
+	var featured *bool
+	if val := queryParams.Get("featured"); val != "" {
+		b, err := strconv.ParseBool(val)
+		if err == nil {
+			featured = &b
+		}
 	}
-	featured, _ := strconv.ParseBool(value)
 
 	page := 1
 	size := 10
