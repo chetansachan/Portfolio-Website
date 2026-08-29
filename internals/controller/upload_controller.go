@@ -18,6 +18,8 @@ type UploadResponse struct {
 	Url     string
 }
 
+const maxFileSize = 10 * 1024 * 1024
+
 type UploadController struct {
 	UploadService *service.UploadService
 }
@@ -38,13 +40,22 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
+
 	var file Upload
-	err := json.NewDecoder(r.Body).Decode(&file)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&file); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "File too large",
+			})
+			return
+		}
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
-			Message: "Invalid File Type",
+			Message: "Invalid Request Body",
 		})
 		return
 	}

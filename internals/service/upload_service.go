@@ -5,9 +5,9 @@ import (
 	Base64 "encoding/base64"
 	"fmt"
 	"os"
+	"portfolio-website/internals/config"
 	"portfolio-website/internals/reposiotry"
 	"regexp"
-	"strconv"
 
 	"github.com/google/uuid"
 )
@@ -98,13 +98,7 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 		return "", fmt.Errorf("Error Saving File into Data base")
 	}
 
-	var baseUrl string
-	isProduction, _ := strconv.ParseBool(os.Getenv("ISPRODUCTION"))
-	if isProduction {
-		baseUrl = "https://portfolio-website-production-bddb.up.railway.app"
-	} else {
-		baseUrl = "http://localhost:8080"
-	}
+	_, baseUrl := config.Load()
 
 	fileUrl := baseUrl + "/files/" + filename
 
