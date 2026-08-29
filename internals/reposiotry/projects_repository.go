@@ -34,21 +34,20 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, name string, des 
 
 	return project, nil
 }
-
-func (r *ProjectRepository) GetAllProjects(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
+func (r *ProjectRepository) GetAllProjects(ctx context.Context, limit int, offset int, featured *bool) ([]model.Project, int, error) {
 	var totalprojects int
-	countQuery := `SELECT COUNT(*) FROM projects`
-	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalprojects); err != nil {
+	countQuery := `SELECT COUNT(*) FROM projects WHERE ($1::boolean IS NULL OR is_featured = $1)`
+	if err := r.Pool.QueryRow(ctx, countQuery, featured).Scan(&totalprojects); err != nil {
 		return nil, 0, fmt.Errorf("failed to count projects: %w", err)
 	}
 
-	rows, err := r.Pool.Query(ctx, "SELECT project_id, project_name, project_des, project_banner, project_content, project_slug, is_featured, created_at FROM projects WHERE is_featured = $1 ORDER BY created_at LIMIT $2 OFFSET $3",featured, page, offset)
+	rows, err := r.Pool.Query(ctx, "SELECT project_id, project_name, project_des, project_banner, project_content, project_slug, is_featured, created_at FROM projects WHERE ($1::boolean IS NULL OR is_featured = $1) ORDER BY created_at LIMIT $2 OFFSET $3", featured, limit, offset)
 	if err != nil {
 		return []model.Project{}, 0, model.ErrProjectNotFound
 	}
 	defer rows.Close()
 
-	var projects []model.Project
+	projects := []model.Project{}
 	for rows.Next() {
 		var project model.Project
 		err := rows.Scan(&project.Project_ID, &project.Project_Name, &project.Project_DES, &project.Project_Banner, &project.Project_Content, &project.Project_Slug, &project.Is_Featured, &project.Created_At)

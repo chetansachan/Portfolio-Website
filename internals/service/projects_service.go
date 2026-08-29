@@ -45,8 +45,8 @@ func (s *ProjectService) CreateProject_Service(ctx context.Context, name string,
 	return project, nil
 }
 
-func (s *ProjectService) GetAllProjects_Service(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
-	project, totalprojects, err := s.ProjectRepository.GetAllProjects(ctx, page, offset, featured)
+func (s *ProjectService) GetAllProjects_Service(ctx context.Context, limit int, offset int, featured *bool) ([]model.Project, int, error) {
+	project, totalprojects, err := s.ProjectRepository.GetAllProjects(ctx, limit, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get projects from database: %v", err)
 		return []model.Project{}, 0, model.ErrProjectNotFound

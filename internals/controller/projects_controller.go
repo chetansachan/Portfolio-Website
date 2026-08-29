@@ -15,7 +15,7 @@ import (
 
 type ProjectServiceInterface interface {
 	CreateProject_Service(ctx context.Context, name string, des string, banner string, content string, slug string, featured bool) (model.Project, error)
-	GetAllProjects_Service(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error)
+	GetAllProjects_Service(ctx context.Context, limit int, offset int, featured *bool) ([]model.Project, int, error)
 	GetProjectById_Service(ctx context.Context, id uuid.UUID) (model.Project, error)
 	GetProjectBySlug_Service(ctx context.Context, slug string) (model.Project, error)
 	DeleteProjectById_Service(ctx context.Context, id uuid.UUID) error
@@ -100,11 +100,13 @@ func (c *ProjectController) GetAllProjects_Controller(w http.ResponseWriter, r *
 	queryParams := r.URL.Query()
 	pageStr := queryParams.Get("page")
 	sizeStr := queryParams.Get("size")
-	value := queryParams.Get("featured")
-	if value == "" {
-		value = "false"
+	var featured *bool
+	if val := queryParams.Get("featured"); val != "" {
+		b, err := strconv.ParseBool(val)
+		if err == nil {
+			featured = &b
+		}
 	}
-	featured, _ := strconv.ParseBool(value)
 
 	page := 1
 	size := 10
@@ -140,7 +142,7 @@ func (c *ProjectController) GetAllProjects_Controller(w http.ResponseWriter, r *
 
 	offset := (page - 1) * size
 
-	projects, totalProjects, err := c.ProjectService.GetAllProjects_Service(r.Context(), page, offset, featured)
+	projects, totalProjects, err := c.ProjectService.GetAllProjects_Service(r.Context(), size, offset, featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrProjectNotFound):
