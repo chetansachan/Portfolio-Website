@@ -45,8 +45,8 @@ func (s *ProjectService) CreateProject_Service(ctx context.Context, name string,
 	return project, nil
 }
 
-func (s *ProjectService) GetAllProjects_Service(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
-	project, totalprojects, err := s.ProjectRepository.GetAllProjects(ctx, page, offset)
+func (s *ProjectService) GetAllProjects_Service(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
+	project, totalprojects, err := s.ProjectRepository.GetAllProjects(ctx, page, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get projects from database: %v", err)
 		return []model.Project{}, 0, model.ErrProjectNotFound
@@ -134,13 +134,4 @@ func (s *ProjectService) UpdateProjectById_Service(ctx context.Context, id uuid.
 	}
 
 	return project, nil
-}
-
-func (s *ProjectService) GetFeaturedProjects_Service(ctx context.Context) ([]model.Project, error) {
-	projects, err := s.ProjectRepository.GetFeaturedProjects(ctx)
-	if err != nil {
-		log.Printf("[ERROR] failed to get featured projects from database: %v", err)
-		return []model.Project{}, model.ErrProjectNotFound
-	}
-	return projects, nil
 }
