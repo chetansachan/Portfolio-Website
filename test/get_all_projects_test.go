@@ -51,7 +51,7 @@ func TestGetAllProjects_Controller(t *testing.T) {
 		queryParams string
 
 		// Mock configuration
-		getAllFunc func(ctx context.Context, page int, offset int) ([]model.Project, int, error)
+		getAllFunc func(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error)
 
 		// Expected response
 		expectedStatus  int
@@ -66,7 +66,7 @@ func TestGetAllProjects_Controller(t *testing.T) {
 			name:        "Success — default query params",
 			method:      http.MethodGet,
 			queryParams: "",
-			getAllFunc: func(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
+			getAllFunc: func(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
 				return sampleProjects, 2, nil
 			},
 			expectedStatus:  http.StatusOK,
@@ -78,7 +78,7 @@ func TestGetAllProjects_Controller(t *testing.T) {
 			name:        "Success — valid custom pagination",
 			method:      http.MethodGet,
 			queryParams: "?page=2&size=5",
-			getAllFunc: func(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
+			getAllFunc: func(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
 				return sampleProjects[:1], 10, nil
 			},
 			expectedStatus:  http.StatusOK,
@@ -90,7 +90,7 @@ func TestGetAllProjects_Controller(t *testing.T) {
 			name:        "Success — size capped at 100",
 			method:      http.MethodGet,
 			queryParams: "?page=1&size=200",
-			getAllFunc: func(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
+			getAllFunc: func(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
 				return sampleProjects, 2, nil
 			},
 			expectedStatus:  http.StatusOK,
@@ -162,7 +162,7 @@ func TestGetAllProjects_Controller(t *testing.T) {
 			name:        "Not Found — service returns ErrProjectNotFound",
 			method:      http.MethodGet,
 			queryParams: "",
-			getAllFunc: func(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
+			getAllFunc: func(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
 				return nil, 0, model.ErrProjectNotFound
 			},
 			expectedStatus:  http.StatusNotFound,
@@ -172,7 +172,7 @@ func TestGetAllProjects_Controller(t *testing.T) {
 			name:        "Internal Server Error — database error",
 			method:      http.MethodGet,
 			queryParams: "",
-			getAllFunc: func(ctx context.Context, page int, offset int) ([]model.Project, int, error) {
+			getAllFunc: func(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
 				return nil, 0, errors.New("database unavailable")
 			},
 			expectedStatus:  http.StatusInternalServerError,
