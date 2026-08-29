@@ -7,13 +7,13 @@ import (
 )
 
 type TokenDetail struct {
-	AccessToken  string
-	RefreshToken string
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
-
 type LoginResponse struct {
-	Success bool
-	Message string
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Tokens  TokenDetail `json:"tokens"`
 }
 
 type GetLoginResponse struct {
@@ -43,4 +43,3 @@ type RefreshToken struct {
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
-
