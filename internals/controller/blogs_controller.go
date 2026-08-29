@@ -19,12 +19,11 @@ import (
 // enabling unit testing with mocks.
 type BlogServiceInterface interface {
 	CreateBlog_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error)
-	GetAllBlogs_Service(ctx context.Context, size int, offset int) ([]model.Blog, int, error)
+	GetAllBlogs_Service(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error)
 	GetBlogBySlug_Service(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogById_Service(ctx context.Context, id uuid.UUID) error
 	UpdateBlogById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string, featured bool) (model.Blog, error)
-	GetFeaturedBlogs_Service(ctx context.Context) ([]model.Blog, error)
 }
 
 type BlogController struct {
@@ -98,6 +97,11 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 	queryParams := r.URL.Query()
 	pageStr := queryParams.Get("page")
 	sizeStr := queryParams.Get("size")
+	value := queryParams.Get("featured")
+	if value == "" {
+		value = "false"
+	}
+	featured, _ := strconv.ParseBool(value)
 
 	page := 1
 	size := 10
@@ -133,7 +137,7 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 
 	offset := (page - 1) * size
 
-	blogs, totalBlogs, err := c.BlogService.GetAllBlogs_Service(r.Context(), size, offset)
+	blogs, totalBlogs, err := c.BlogService.GetAllBlogs_Service(r.Context(), size, offset, featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrBlogNotFound):
@@ -398,43 +402,5 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 			Message: "Blog Updated Successfully",
 		},
 		Data: blog,
-	})
-}
-
-func (c *BlogController) GetFeaturedBlogs_Controller(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.Response{Success: false, Message: "Method not allowed"})
-		return
-	}
-
-	blogs, err := c.BlogService.GetFeaturedBlogs_Service(r.Context())
-	if err != nil {
-		switch {
-		case errors.Is(err, model.ErrBlogNotFound):
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(model.Response{
-				Success: false,
-				Message: "No Featured Blogs Found",
-			})
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(model.Response{
-				Success: false,
-				Message: "Internal server error. Please try again later.",
-			})
-		}
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(model.GetBlogsResponse{
-		Response: model.Response{
-			Success: true,
-			Message: "Featured blogs retrieved successfully",
-		},
-		Data: blogs,
 	})
 }

@@ -32,14 +32,22 @@ func (r *BlogRepository) CreateBlog(ctx context.Context, Blog_Title string, Blog
 	return blog, nil
 }
 
-func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int) ([]model.Blog, int, error) {
+func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int, featured bool) ([]model.Blog, int, error) {
 	var totalBlogs int
 	countQuery := `SELECT COUNT(*) FROM blogs`
 	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalBlogs); err != nil {
 		return nil, 0, fmt.Errorf("failed to count blogs: %w", err)
 	}
 
-	rows, err := r.Pool.Query(ctx, "SELECT blog_id, blog_title, blog_des, blog_slug, blog_content, blog_banner, is_featured, created_at FROM blogs ORDER BY created_at LIMIT $1 OFFSET $2", limit, offset)
+	query := `
+		SELECT blog_id, blog_title, blog_des, blog_slug, blog_content, blog_banner, is_featured, created_at 
+		FROM blogs 
+		WHERE is_featured = $1 
+		ORDER BY created_at DESC 
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.Pool.Query(ctx, query, featured, limit, offset)
 	if err != nil {
 		return []model.Blog{}, 0, fmt.Errorf("query error: %w", err)
 	}
@@ -48,19 +56,25 @@ func (r *BlogRepository) GetAllBlogs(ctx context.Context, limit int, offset int)
 	var blogs []model.Blog
 	for rows.Next() {
 		var blog model.Blog
-		if err := rows.Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Is_Featured, &blog.Created_At); err == sql.ErrNoRows {
-			log.Printf("Database error: %v", err)
-			return []model.Blog{}, 0, err
+		err := rows.Scan(
+			&blog.Blog_ID, 
+			&blog.Blog_Title, 
+			&blog.Blog_DES, 
+			&blog.Blog_Slug, 
+			&blog.Blog_Content, 
+			&blog.Blog_Banner, 
+			&blog.Is_Featured, 
+			&blog.Created_At,
+		)
+		if err != nil {
+			log.Printf("Database error scanning blog row: %v", err)
+			return nil, 0, fmt.Errorf("scan row error: %w", err)
 		}
 		blogs = append(blogs, blog)
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, 0, fmt.Errorf("row loop error: %w", err)
-	}
-
-	if len(blogs) == 0 {
-		return []model.Blog{}, 0, model.ErrProjectNotFound
 	}
 
 	return blogs, totalBlogs, nil
@@ -137,7 +151,7 @@ func (r *BlogRepository) UpdateBlogById(ctx context.Context, id uuid.UUID, title
 
 func (r *BlogRepository) GetFeaturedBlogs(ctx context.Context) ([]model.Blog, error) {
 	query := `
-		SELECT blog_id, blog_title, blog_des, blog_slug, blog_content, blog_banner, is_featured, created_at 
+		SELECT *
 		FROM blogs 
 		WHERE is_featured = true 
 		ORDER BY created_at DESC

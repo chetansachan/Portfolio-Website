@@ -42,8 +42,8 @@ func (s *BlogService) CreateBlog_Service(ctx context.Context, title, des, slug, 
 	return blog, nil
 }
 
-func (s *BlogService) GetAllBlogs_Service(ctx context.Context, limit, offset int) ([]model.Blog, int, error) {
-	blogs, totalblogs, err := s.BlogRepository.GetAllBlogs(ctx, limit, offset)
+func (s *BlogService) GetAllBlogs_Service(ctx context.Context, limit, offset int, featured bool) ([]model.Blog, int, error) {
+	blogs, totalblogs, err := s.BlogRepository.GetAllBlogs(ctx, limit, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get blogs from database: %v", err)
 		return []model.Blog{}, 0, model.ErrBlogNotFound
@@ -130,13 +130,4 @@ func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, 
 	}
 
 	return blog, nil
-}
-
-func (s *BlogService) GetFeaturedBlogs_Service(ctx context.Context) ([]model.Blog, error) {
-	blogs, err := s.BlogRepository.GetFeaturedBlogs(ctx)
-	if err != nil {
-		log.Printf("[ERROR] failed to get featured blogs from database: %v", err)
-		return []model.Blog{}, model.ErrBlogNotFound
-	}
-	return blogs, nil
 }
