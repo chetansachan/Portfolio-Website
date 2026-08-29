@@ -22,8 +22,8 @@ type PaginatedResponse struct {
 }
 
 type Response struct {
-	Success bool
-	Message string
+	Success bool	`json:"success"`
+	Message string `json:"message"`
 }
 
 type GetBlogsResponse struct {

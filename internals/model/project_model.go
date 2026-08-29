@@ -7,12 +7,12 @@ import (
 )
 
 type PaginationProjectMeta struct {
-	CurrentPage int  `json:"current_page"`
-	PageSize    int  `json:"page_size"`
-	TotalProjects  int  `json:"total_blogs"`
-	TotalPages  int  `json:"total_pages"`
-	HasNext     bool `json:"has_next"`
-	HasPrev     bool `json:"has_prev"`
+	CurrentPage   int  `json:"current_page"`
+	PageSize      int  `json:"page_size"`
+	TotalProjects int  `json:"total_blogs"`
+	TotalPages    int  `json:"total_pages"`
+	HasNext       bool `json:"has_next"`
+	HasPrev       bool `json:"has_prev"`
 }
 
 type PaginatedProjectResponse struct {
@@ -22,13 +22,13 @@ type PaginatedProjectResponse struct {
 }
 
 type ProjectResponse struct {
-	Success bool
-	Message string
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 type GetProjectResponse struct {
 	ProjectResponse
-	Data []Project
+	Data []Project `json:"data"`
 }
 
 type PostProjectResponse struct {

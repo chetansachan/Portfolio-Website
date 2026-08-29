@@ -7,12 +7,12 @@ import (
 )
 
 type Case_StudyPaginationMeta struct {
-	CurrentPage int  `json:"current_page"`
-	PageSize    int  `json:"page_size"`
-	TotalCaseStudies  int  `json:"total_case_studies"`
-	TotalPages  int  `json:"total_pages"`
-	HasNext     bool `json:"has_next"`
-	HasPrev     bool `json:"has_prev"`
+	CurrentPage      int  `json:"current_page"`
+	PageSize         int  `json:"page_size"`
+	TotalCaseStudies int  `json:"total_case_studies"`
+	TotalPages       int  `json:"total_pages"`
+	HasNext          bool `json:"has_next"`
+	HasPrev          bool `json:"has_prev"`
 }
 
 type Case_StudyPaginatedResponse struct {
@@ -22,13 +22,13 @@ type Case_StudyPaginatedResponse struct {
 }
 
 type CaseStudyResponse struct {
-	Success bool
-	Message string
+	Success bool	`json:"success"`
+	Message string `json:"message"`
 }
 
 type GetCaseStudyResponse struct {
 	CaseStudyResponse
-	Data []Case_Study
+	Data []Case_Study `json:"data"`
 }
 
 type PostCaseStudyResponse struct {
