@@ -49,7 +49,7 @@ func TestGetAllBlogs_Controller(t *testing.T) {
 		queryParams string
 
 		// Mock configuration
-		getAllFunc func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error)
+		getAllFunc func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error)
 
 		// Expected response
 		expectedStatus  int
@@ -67,7 +67,7 @@ func TestGetAllBlogs_Controller(t *testing.T) {
 			name:        "Success — default pagination params (page=1, size=10)",
 			method:      http.MethodGet,
 			queryParams: "",
-			getAllFunc: func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error) {
+			getAllFunc: func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error) {
 				if size != 10 || offset != 0 {
 					t.Errorf("Expected size=10, offset=0, got size=%d, offset=%d", size, offset)
 				}
@@ -85,7 +85,7 @@ func TestGetAllBlogs_Controller(t *testing.T) {
 			name:        "Success — custom valid pagination (page=2, size=5)",
 			method:      http.MethodGet,
 			queryParams: "?page=2&size=5",
-			getAllFunc: func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error) {
+			getAllFunc: func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error) {
 				if size != 5 || offset != 5 {
 					t.Errorf("Expected size=5, offset=5, got size=%d, offset=%d", size, offset)
 				}
@@ -103,7 +103,7 @@ func TestGetAllBlogs_Controller(t *testing.T) {
 			name:        "Success — empty list when no blogs exist",
 			method:      http.MethodGet,
 			queryParams: "?page=1&size=10",
-			getAllFunc: func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error) {
+			getAllFunc: func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error) {
 				return []model.Blog{}, 0, nil
 			},
 			expectedStatus:  http.StatusOK,
@@ -118,7 +118,7 @@ func TestGetAllBlogs_Controller(t *testing.T) {
 			name:        "Success — size capped at maximum of 100",
 			method:      http.MethodGet,
 			queryParams: "?page=1&size=500",
-			getAllFunc: func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error) {
+			getAllFunc: func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error) {
 				if size != 100 {
 					t.Errorf("Expected size to be capped at 100, got %d", size)
 				}
@@ -229,7 +229,7 @@ func TestGetAllBlogs_Controller(t *testing.T) {
 			name:        "Not Found — service returns ErrBlogNotFound",
 			method:      http.MethodGet,
 			queryParams: "",
-			getAllFunc: func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error) {
+			getAllFunc: func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error) {
 				return nil, 0, model.ErrBlogNotFound
 			},
 			expectedStatus:  http.StatusNotFound,
@@ -240,7 +240,7 @@ func TestGetAllBlogs_Controller(t *testing.T) {
 			name:        "Internal Server Error — database connection failure",
 			method:      http.MethodGet,
 			queryParams: "",
-			getAllFunc: func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error) {
+			getAllFunc: func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error) {
 				return nil, 0, errors.New("db connection timeout")
 			},
 			expectedStatus:  http.StatusInternalServerError,

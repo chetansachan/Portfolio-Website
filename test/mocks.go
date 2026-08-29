@@ -13,7 +13,7 @@ import (
 
 type MockBlogService struct {
 	CreateBlogFunc    func(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Blog, error)
-	GetAllBlogsFunc   func(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error)
+	GetAllBlogsFunc   func(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error)
 	GetBlogBySlugFunc func(ctx context.Context, slug string) (model.Blog, error)
 	GetBlogByIdFunc   func(ctx context.Context, id uuid.UUID) (model.Blog, error)
 	DeleteBlogFunc    func(ctx context.Context, id uuid.UUID) error
@@ -32,7 +32,7 @@ func (m *MockBlogService) CreateBlog_Service(ctx context.Context, title, des, sl
 	return model.Blog{}, nil
 }
 
-func (m *MockBlogService) GetAllBlogs_Service(ctx context.Context, size int, offset int, featured bool) ([]model.Blog, int, error) {
+func (m *MockBlogService) GetAllBlogs_Service(ctx context.Context, size int, offset int, featured *bool) ([]model.Blog, int, error) {
 	if m.GetAllBlogsFunc != nil {
 		return m.GetAllBlogsFunc(ctx, size, offset, featured)
 	}
@@ -80,7 +80,7 @@ func (m *MockBlogService) GetFeaturedBlogs_Service(ctx context.Context) ([]model
 
 type MockProjectService struct {
 	CreateProjectFunc    func(ctx context.Context, name, des, banner, content, slug string, featured bool) (model.Project, error)
-	GetAllProjectsFunc   func(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error)
+	GetAllProjectsFunc   func(ctx context.Context, limit int, offset int, featured *bool) ([]model.Project, int, error)
 	GetProjectByIdFunc   func(ctx context.Context, id uuid.UUID) (model.Project, error)
 	GetProjectBySlugFunc func(ctx context.Context, slug string) (model.Project, error)
 	DeleteProjectFunc    func(ctx context.Context, id uuid.UUID) error
@@ -94,9 +94,9 @@ func (m *MockProjectService) CreateProject_Service(ctx context.Context, name, de
 	return model.Project{}, nil
 }
 
-func (m *MockProjectService) GetAllProjects_Service(ctx context.Context, page int, offset int, featured bool) ([]model.Project, int, error) {
+func (m *MockProjectService) GetAllProjects_Service(ctx context.Context, limit int, offset int, featured *bool) ([]model.Project, int, error) {
 	if m.GetAllProjectsFunc != nil {
-		return m.GetAllProjectsFunc(ctx, page, offset, featured)
+		return m.GetAllProjectsFunc(ctx, limit, offset, featured)
 	}
 	return nil, 0, nil
 }
