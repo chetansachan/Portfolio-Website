@@ -8,7 +8,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func Load() string {
+func Load() (string, string) {
+	value := os.Getenv("ISPRODUCTION")
+	isProduction, _ := strconv.ParseBool(value)
+	var baseUrl string
+	if isProduction {
+		baseUrl = "https://portfolio-website-production-bddb.up.railway.app"
+	} else {
+		baseUrl = "http://localhost:8080"
+	}
 	// 1. Load .env file for local development (godotenv does not overwrite existing system env vars)
 	if err := godotenv.Load(".env"); err != nil {
 		if err2 := godotenv.Load("../.env"); err2 != nil {
@@ -33,5 +41,5 @@ func Load() string {
 		log.Println("Warning: DATABASE_URL is not set in system environment variables or .env file")
 	}
 
-	return dbURL
+	return dbURL, baseUrl
 }

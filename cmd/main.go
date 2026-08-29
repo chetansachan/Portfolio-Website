@@ -16,7 +16,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	cfg := config.Load()
+	cfg, _ := config.Load()
 	fmt.Println(cfg)
 
 	if err := database.Connect(ctx, cfg); err != nil {
