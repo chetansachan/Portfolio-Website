@@ -44,14 +44,14 @@ func (r *CaseStudyRepository) CreateCaseStudy(ctx context.Context, Title string,
 	return case_study, nil
 }
 
-func (r *CaseStudyRepository) GetAllCaseStudies(ctx context.Context, limit int, offset int) ([]model.Case_Study, int, error) {
+func (r *CaseStudyRepository) GetAllCaseStudies(ctx context.Context, limit int, offset int, featured bool) ([]model.Case_Study, int, error) {
 	var totalCaseStudies int
 	countQuery := `SELECT COUNT(*) FROM case_studies`
 	if err := r.Pool.QueryRow(ctx, countQuery).Scan(&totalCaseStudies); err != nil {
 		return nil, 0, fmt.Errorf("failed to count case studies: %w", err)
 	}
 
-	rows, err := r.Pool.Query(ctx, "SELECT case_study_id, case_study_title, case_study_des, case_study_slug, case_study_content, case_study_banner, is_featured, created_at FROM case_studies ORDER BY created_at LIMIT $1 OFFSET $2", limit, offset)
+	rows, err := r.Pool.Query(ctx, "SELECT case_study_id, case_study_title, case_study_des, case_study_slug, case_study_content, case_study_banner, is_featured, created_at FROM case_studies WHERE is_featured = $1 ORDER BY created_at LIMIT $2 OFFSET $3", featured, limit, offset)
 	if err != nil {
 		return []model.Case_Study{}, 0, fmt.Errorf("query error: %w", err)
 	}
@@ -81,10 +81,6 @@ func (r *CaseStudyRepository) GetAllCaseStudies(ctx context.Context, limit int, 
 
 	if err = rows.Err(); err != nil {
 		return nil, 0, fmt.Errorf("row loop error: %w", err)
-	}
-
-	if len(case_studies) == 0 {
-		return []model.Case_Study{}, 0, model.ErrCaseStudyNotFound
 	}
 
 	return case_studies, totalCaseStudies, nil

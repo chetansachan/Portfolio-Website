@@ -15,12 +15,11 @@ import (
 
 type CaseStudyServiceInterface interface {
 	CreateCaseStudy_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Case_Study, error)
-	GetAllCaseStudies_Service(ctx context.Context, size int, offset int) ([]model.Case_Study, int, error)
+	GetAllCaseStudies_Service(ctx context.Context, size int, offset int, featured bool) ([]model.Case_Study, int, error)
 	GetCaseStudyBySlug_Service(ctx context.Context, slug string) (model.Case_Study, error)
 	GetCaseStudyById_Service(ctx context.Context, id uuid.UUID) (model.Case_Study, error)
 	DeleteCaseStudyById_Service(ctx context.Context, id uuid.UUID) error
 	UpdateCaseStudyById_Service(ctx context.Context, id uuid.UUID, title, des, slug, content, banner string, featured bool) (model.Case_Study, error)
-	GetFeaturedCaseStudies_Service(ctx context.Context) ([]model.Case_Study, error)
 }
 
 type CaseStudyController struct {
@@ -94,6 +93,11 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 	queryParams := r.URL.Query()
 	pageStr := queryParams.Get("page")
 	sizeStr := queryParams.Get("size")
+	value := queryParams.Get("featured")
+	if value == "" {
+		value = "false"
+	}
+	featured, _ := strconv.ParseBool(value)
 
 	page := 1
 	size := 10
@@ -129,7 +133,7 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 
 	offset := (page - 1) * size
 
-	case_studies, totalCaseStudies, err := c.CaseStudyService.GetAllCaseStudies_Service(r.Context(), size, offset)
+	case_studies, totalCaseStudies, err := c.CaseStudyService.GetAllCaseStudies_Service(r.Context(), size, offset, featured)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrCaseStudyNotFound):
@@ -395,40 +399,3 @@ func (c *CaseStudyController) UpdateCaseStudyById_Controller(w http.ResponseWrit
 	})
 }
 
-func (c *CaseStudyController) GetFeaturedCaseStudies_Controller(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.CaseStudyResponse{Success: false, Message: "Method not allowed"})
-		return
-	}
-
-	caseStudies, err := c.CaseStudyService.GetFeaturedCaseStudies_Service(r.Context())
-	if err != nil {
-		switch {
-		case errors.Is(err, model.ErrCaseStudyNotFound):
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(model.CaseStudyResponse{
-				Success: false,
-				Message: "No Featured Case Studies Found",
-			})
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(model.CaseStudyResponse{
-				Success: false,
-				Message: "Internal server error. Please try again later.",
-			})
-		}
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(model.GetCaseStudyResponse{
-		CaseStudyResponse: model.CaseStudyResponse{
-			Success: true,
-			Message: "Featured case studies retrieved successfully",
-		},
-		Data: caseStudies,
-	})
-}
