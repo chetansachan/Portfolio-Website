@@ -91,28 +91,11 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    tokens.AccessToken,
-		Expires:  time.Now().Add(15 * time.Minute),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-	})
-
 	w.WriteHeader(http.StatusFound)
 	json.NewEncoder(w).Encode(model.LoginResponse{
 		Success: true,
 		Message: "Login Successful",
+		Tokens: tokens,
 	},
 	)
 }

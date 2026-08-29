@@ -12,7 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func exampleMiddleware(next http.Handler) http.Handler {
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		secretStr := os.Getenv("MY_JWT_SECRETKEY")
