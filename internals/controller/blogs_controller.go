@@ -220,12 +220,12 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 		return
 	}
 
-	response := model.GetBlogsResponse{
+	response := model.PostBlogResponse{
 		Response: model.Response{
 			Success: true,
 			Message: "Blog Found Successfully",
 		},
-		Data: []model.Blog{blog},
+		Data: blog,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

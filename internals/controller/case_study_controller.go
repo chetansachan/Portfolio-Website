@@ -216,12 +216,12 @@ func (c *CaseStudyController) GetCaseStudyBySlug_Controller(w http.ResponseWrite
 		return
 	}
 
-	response := model.GetCaseStudyResponse{
+	response := model.PostCaseStudyResponse{
 		CaseStudyResponse: model.CaseStudyResponse{
 			Success: true,
 			Message: "Case Study Found Successfully",
 		},
-		Data: []model.Case_Study{case_study},
+		Data: case_study,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -400,4 +400,3 @@ func (c *CaseStudyController) UpdateCaseStudyById_Controller(w http.ResponseWrit
 		Data: case_study,
 	})
 }
-
