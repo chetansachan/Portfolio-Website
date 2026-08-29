@@ -15,7 +15,7 @@ import (
 
 type CaseStudyServiceInterface interface {
 	CreateCaseStudy_Service(ctx context.Context, title, des, slug, content, banner string, featured bool) (model.Case_Study, error)
-	GetAllCaseStudies_Service(ctx context.Context, size int, offset int, featured bool) ([]model.Case_Study, int, error)
+	GetAllCaseStudies_Service(ctx context.Context, size int, offset int, featured *bool) ([]model.Case_Study, int, error)
 	GetCaseStudyBySlug_Service(ctx context.Context, slug string) (model.Case_Study, error)
 	GetCaseStudyById_Service(ctx context.Context, id uuid.UUID) (model.Case_Study, error)
 	DeleteCaseStudyById_Service(ctx context.Context, id uuid.UUID) error
@@ -93,11 +93,13 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 	queryParams := r.URL.Query()
 	pageStr := queryParams.Get("page")
 	sizeStr := queryParams.Get("size")
-	value := queryParams.Get("featured")
-	if value == "" {
-		value = "false"
+	var featured *bool
+	if val := queryParams.Get("featured"); val != "" {
+		b, err := strconv.ParseBool(val)
+		if err == nil {
+			featured = &b
+		}
 	}
-	featured, _ := strconv.ParseBool(value)
 
 	page := 1
 	size := 10

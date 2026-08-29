@@ -42,7 +42,7 @@ func (s *CaseStudyService) CreateCaseStudy_Service(ctx context.Context, title, d
 	return casestudy, nil
 }
 
-func (s *CaseStudyService) GetAllCaseStudies_Service(ctx context.Context, limit, offset int, featured bool) ([]model.Case_Study, int, error) {
+func (s *CaseStudyService) GetAllCaseStudies_Service(ctx context.Context, limit, offset int, featured *bool) ([]model.Case_Study, int, error) {
 	case_studies, totalcasestudies, err := s.CaseStudyRepository.GetAllCaseStudies(ctx, limit, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get case studies from database: %v", err)
