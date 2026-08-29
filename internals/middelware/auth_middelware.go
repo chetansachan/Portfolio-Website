@@ -30,7 +30,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if header == "" {
 			fmt.Println("authorization header is missing")
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.LoginResponse{
+			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Authorization header is missing",
 			})
@@ -41,7 +41,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if len(headerParts) != 2 || !strings.EqualFold(headerParts[0], "Bearer") {
 			fmt.Println("Invalid Header Format")
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.LoginResponse{
+			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Invalid Header Format",
 			})
@@ -51,7 +51,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		access_token := headerParts[1]
 		if access_token == "" || access_token == header {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.LoginResponse{
+			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Invalid Header Format",
 			})
@@ -62,7 +62,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
 				fmt.Println("Unexpected Signing Method")
 				w.WriteHeader(http.StatusBadGateway)
-				json.NewEncoder(w).Encode(model.LoginResponse{
+				json.NewEncoder(w).Encode(model.Response{
 					Success: false,
 					Message: "Internal Servor Error",
 				})
@@ -77,7 +77,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil || !token.Valid {
 			fmt.Println("Invalid Token")
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(model.LoginResponse{
+			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Invalid Token",
 			})
@@ -85,7 +85,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		} else if !ok {
 			fmt.Println("Unknown claims type, cannot proceed")
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(model.LoginResponse{
+			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Unknown claims type",
 			})
@@ -93,7 +93,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		} else if !isValid {
 			fmt.Println("Token is Expired")
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(model.LoginResponse{
+			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Token is Expired",
 			})

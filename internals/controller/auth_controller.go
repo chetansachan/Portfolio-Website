@@ -22,7 +22,7 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.LoginResponse{
+		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
 			Message: "Method Not Allowed",
 		})
@@ -33,7 +33,7 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Printf("[WARN] Invalid JSON payload: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.LoginResponse{
+		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
 			Message: "Invalid JSON Payload",
 		})
@@ -43,7 +43,7 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 	err := c.AuthService.RegisterUser_Service(r.Context(), user.Name, user.Email, user.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.LoginResponse{
+		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
 			Message: "Error Creating Admin",
 		})
@@ -51,7 +51,7 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(model.LoginResponse{
+	json.NewEncoder(w).Encode(model.Response{
 		Success: true,
 		Message: "User Registered Successfully",
 	},
@@ -63,7 +63,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(model.LoginResponse{
+		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
 			Message: "Method Not Allowed",
 		})
@@ -74,7 +74,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		log.Printf("[WARN] Invalid JSON payload: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.LoginResponse{
+		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
 			Message: "Invalid JSON Payload",
 		})
@@ -84,7 +84,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 	tokens, err := c.AuthService.Login_Service(r.Context(), u.Name, u.Email, u.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.LoginResponse{
+		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
 			Message: "Error Logging",
 		})
@@ -95,7 +95,10 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(model.LoginResponse{
 		Success: true,
 		Message: "Login Successful",
-		Tokens: tokens,
+		Tokens: model.TokenDetail{
+			AccessToken: tokens.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+		},
 	},
 	)
 }
