@@ -243,11 +243,25 @@ func (s *AuthService) RotateTokens_Service(ctx context.Context, refreshToken str
 
 	if err := s.AuthRepo.DeleteRefreshTkn(ctx, hashedTkn); err != nil {
 		log.Printf("failed to delete old refresh token: %v", err)
+		return model.TokenDetail{}, err
 	}
 
 	return model.TokenDetail{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
 	}, nil
+}
+
+func (s *AuthService) DeleteUserByID_Service(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return model.ErrIdValidation
+	}
+
+	if err := s.AuthRepo.DeleteUserByID(ctx, id); err != nil {
+		log.Printf("failed to delete user from db: %v", err)
+		return err
+	}
+
+	return nil
 }
 

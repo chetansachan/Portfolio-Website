@@ -9,6 +9,7 @@ import (
 	"portfolio-website/internals/service"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -52,7 +53,7 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 				Success: false,
 				Message: "Invalid Email",
 			})
-		case errors.Is(err,model.ErrUserAlreadyExist):
+		case errors.Is(err, model.ErrUserAlreadyExist):
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -227,5 +228,53 @@ func (c *AuthController) RefreshToken_Controller(w http.ResponseWriter, r *http.
 			AccessToken:  tokens.AccessToken,
 			RefreshToken: tokens.RefreshToken,
 		},
+	})
+}
+
+func (c *AuthController) DeleteUserByID_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	idStr := r.PathValue("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Invalid Id",
+		})
+		return
+	}
+
+	if err := c.AuthService.DeleteUserByID_Service(r.Context(), id); err != nil {
+		switch {
+		case errors.Is(err, model.ErrIdValidation):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Id is required",
+			})
+		default:
+			log.Printf("[ERROR] RegisterUser failed: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal Server Error",
+			})
+			return
+		}
+	}
+
+	json.NewEncoder(w).Encode(model.Response{
+		Success: true,
+		Message: "User Deleted Successfully",
 	})
 }

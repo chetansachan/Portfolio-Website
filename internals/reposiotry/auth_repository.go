@@ -100,3 +100,15 @@ func (r *AuthRepo) GetUserByID(ctx context.Context, id uuid.UUID) (model.User, e
 	return user, nil
 }
 
+func (r *AuthRepo) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
+	query := `
+		DELETE FROM users
+		WHERE id = $1
+	`
+	_, err := r.Pool.Exec(ctx, query, id)
+	if err != nil {
+		log.Printf("Database error: %v", err)
+		return err
+	}
+	return nil
+}
