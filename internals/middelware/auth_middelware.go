@@ -2,11 +2,11 @@ package middelware
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"portfolio-website/internals/model"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -19,44 +19,34 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if secretStr == "" {
 			fmt.Println("MY_JWT_SECRETKEY is not set")
 			w.WriteHeader(http.StatusBadGateway)
-			json.NewEncoder(w).Encode(model.LoginResponse{
+			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Internal Server Error",
 			})
 			return
 		}
 
-		header := r.Header.Get("Authorization")
-		if header == "" {
-			fmt.Println("authorization header is missing")
-			w.WriteHeader(http.StatusBadRequest)
+		cookie, err := r.Cookie("session_token")
+		if err != nil {
+			if errors.Is(err, http.ErrNoCookie) {
+				fmt.Println("Cookie not found")
+				w.WriteHeader(http.StatusNotFound)
+				json.NewEncoder(w).Encode(model.Response{
+					Success: false,
+					Message: "Cookie not found",
+				})
+				return
+			}
+			fmt.Println("Cookie not found")
+			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Authorization header is missing",
+				Message: "Server error",
 			})
 			return
 		}
 
-		headerParts := strings.Split(header, " ")
-		if len(headerParts) != 2 || !strings.EqualFold(headerParts[0], "Bearer") {
-			fmt.Println("Invalid Header Format")
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.Response{
-				Success: false,
-				Message: "Invalid Header Format",
-			})
-			return
-		}
-
-		access_token := headerParts[1]
-		if access_token == "" || access_token == header {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.Response{
-				Success: false,
-				Message: "Invalid Header Format",
-			})
-			return
-		}
+		access_token := cookie.Value
 
 		token, err := jwt.Parse(access_token, func(token *jwt.Token) (any, error) {
 			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
@@ -71,8 +61,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		})
 
 		claims, ok := token.Claims.(jwt.MapClaims)
-		isValid := claims.VerifyExpiresAt(time.Now().Unix(), true) 
-
+		isValid := claims.VerifyExpiresAt(time.Now().Unix(), true)
 
 		if err != nil || !token.Valid {
 			fmt.Println("Invalid Token")
@@ -81,7 +70,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				Success: false,
 				Message: "Invalid Token",
 			})
-			return 
+			return
 		} else if !ok {
 			fmt.Println("Unknown claims type, cannot proceed")
 			w.WriteHeader(http.StatusUnauthorized)
@@ -89,7 +78,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				Success: false,
 				Message: "Unknown claims type",
 			})
-			return 
+			return
 		} else if !isValid {
 			fmt.Println("Token is Expired")
 			w.WriteHeader(http.StatusUnauthorized)
@@ -97,7 +86,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				Success: false,
 				Message: "Token is Expired",
 			})
-			return 
+			return
 		}
 
 		next.ServeHTTP(w, r)
