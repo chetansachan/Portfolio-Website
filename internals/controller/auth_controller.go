@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"portfolio-website/internals/model"
@@ -42,11 +43,23 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 
 	err := c.AuthService.RegisterUser_Service(r.Context(), user.Name, user.Email, user.Password)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Error Creating Admin",
-		})
+		switch {
+		case errors.Is(err, model.ErrInvalidEmail),
+			errors.Is(err, model.ErrPasswordRequired),
+			errors.Is(err, model.ErrPasswordTooShort),
+			errors.Is(err, model.ErrPasswordWeak):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: err.Error(),
+			})
+		default:
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Error Creating Admin",
+			})
+		}
 		return
 	}
 
@@ -83,11 +96,20 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 
 	tokens, err := c.AuthService.Login_Service(r.Context(), u.Email, u.Password)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Error Logging",
-		})
+		switch {
+		case errors.Is(err, model.ErrInvalidEmail):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: err.Error(),
+			})
+		default:
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Error Logging",
+			})
+		}
 		return
 	}
 
@@ -167,5 +189,9 @@ func (c *AuthController) RefreshToken_Controller(w http.ResponseWriter, r *http.
 	json.NewEncoder(w).Encode(model.LoginResponse{
 		Success: true,
 		Message: "Token refreshed successfully",
+		Tokens: model.TokenDetail{
+			AccessToken: tokens.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+		},
 	})
 }

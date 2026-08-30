@@ -11,6 +11,7 @@ import (
 	"portfolio-website/internals/reposiotry"
 	"regexp"
 	"time"
+	"unicode"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -41,18 +42,43 @@ func HashToken(rawToken string) string {
 	return hex.EncodeToString(hash[:])
 }
 
+func isPasswordStrong(password string) bool {
+	var (
+		hasUpper   bool
+		hasLower   bool
+		hasNumber  bool
+		hasSpecial bool
+	)
+	for _, r := range password {
+		switch {
+		case unicode.IsUpper(r):
+			hasUpper = true
+		case unicode.IsLower(r):
+			hasLower = true
+		case unicode.IsDigit(r):
+			hasNumber = true
+		case unicode.IsPunct(r) || unicode.IsSymbol(r):
+			hasSpecial = true
+		}
+	}
+	return hasUpper && hasLower && hasNumber && hasSpecial
+}
+
 func (s *AuthService) RegisterUser_Service(ctx context.Context, name string, email string, password string) error {
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 
 	if !re.MatchString(email) {
-		return fmt.Errorf("%s is invalid", email)
+		return model.ErrInvalidEmail
 	}
 	if password == "" {
-		return fmt.Errorf("password is required and cannot be empty")
+		return model.ErrPasswordRequired
 	}
 	if len(password) < 8 {
-		return fmt.Errorf("password length must be at least 8 characters")
+		return model.ErrPasswordTooShort
+	}
+	if !isPasswordStrong(password) {
+		return model.ErrPasswordWeak
 	}
 
 	hashpassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
@@ -72,7 +98,7 @@ func (s *AuthService) Login_Service(ctx context.Context, email string, password 
 	re := regexp.MustCompile(emailRegex)
 
 	if !re.MatchString(email) {
-		return model.TokenDetail{}, fmt.Errorf("%s is invalid", email)
+		return model.TokenDetail{}, model.ErrInvalidEmail
 	}
 
 	user, err := s.AuthRepo.Login(ctx, email)
