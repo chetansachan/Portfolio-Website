@@ -27,7 +27,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		cookie, err := r.Cookie("session_token")
+		cookie, err := r.Cookie("access_token")
 		if err != nil {
 			if errors.Is(err, http.ErrNoCookie) {
 				log.Println("[INFO] Authentication failed: session_token cookie not found")
