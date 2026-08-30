@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"errors"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type ProjectService struct {
@@ -49,7 +51,10 @@ func (s *ProjectService) GetAllProjects_Service(ctx context.Context, limit int, 
 	project, totalprojects, err := s.ProjectRepository.GetAllProjects(ctx, limit, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get projects from database: %v", err)
-		return []model.Project{}, 0, model.ErrProjectNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []model.Project{}, 0, model.ErrProjectNotFound
+		}
+		return []model.Project{}, 0, err
 	}
 
 	return project, totalprojects, nil
@@ -65,7 +70,10 @@ func (s *ProjectService) GetProjectById_Service(ctx context.Context, id uuid.UUI
 	project, err := s.ProjectRepository.GetProjectById(ctx, id)
 	if err != nil {
 		log.Println("[Error] Error Geting project from database")
-		return model.Project{}, model.ErrProjectNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Project{}, model.ErrProjectNotFound
+		}
+		return model.Project{}, err
 	}
 
 	return project, nil
@@ -80,7 +88,10 @@ func (s *ProjectService) GetProjectBySlug_Service(ctx context.Context, slug stri
 	project, err := s.ProjectRepository.GetProjectBySlug(ctx, slug)
 	if err != nil {
 		log.Println("[Error] Error Geting project from database")
-		return model.Project{}, model.ErrProjectNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Project{}, model.ErrProjectNotFound
+		}
+		return model.Project{}, err
 	}
 
 	return project, nil
@@ -108,7 +119,10 @@ func (s *ProjectService) UpdateProjectById_Service(ctx context.Context, id uuid.
 	p, err := s.ProjectRepository.GetProjectById(ctx, id)
 	if err != nil {
 		log.Printf("[ERROR] project not found: %v", err)
-		return model.Project{}, model.ErrProjectNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Project{}, model.ErrProjectNotFound
+		}
+		return model.Project{}, err
 	}
 
 	if name == "" {
@@ -130,7 +144,10 @@ func (s *ProjectService) UpdateProjectById_Service(ctx context.Context, id uuid.
 	project, err := s.ProjectRepository.UpdateProjectById(ctx, id, name, des, content, banner, slug, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to update project from database: %v", err)
-		return model.Project{}, model.ErrProjectNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Project{}, model.ErrProjectNotFound
+		}
+		return model.Project{}, err
 	}
 
 	return project, nil

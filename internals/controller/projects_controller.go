@@ -61,13 +61,14 @@ func (c *ProjectController) CreateProject_Controller(w http.ResponseWriter, r *h
 			})
 
 		case errors.Is(err, model.ErrProjectAlreadyExist):
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusConflict)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Project Already Exist",
 			})
 
 		default:
+			log.Printf("[ERROR] CreateProject failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -152,6 +153,7 @@ func (c *ProjectController) GetAllProjects_Controller(w http.ResponseWriter, r *
 				Message: "No Project Found",
 			})
 		default:
+			log.Printf("[ERROR] GetAllProjects failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -220,13 +222,14 @@ func (c *ProjectController) GetProjectById_Controller(w http.ResponseWriter, r *
 			})
 
 		case errors.Is(err, model.ErrProjectNotFound):
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(model.ProjectResponse{
 				Success: false,
 				Message: "Project Not Found",
 			})
 
 		default:
+			log.Printf("[ERROR] GetProjectById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.ProjectResponse{
 				Success: false,
@@ -236,7 +239,7 @@ func (c *ProjectController) GetProjectById_Controller(w http.ResponseWriter, r *
 		return
 	}
 
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.PostProjectResponse{
 		ProjectResponse: model.ProjectResponse{
 			Success: true,
@@ -270,13 +273,14 @@ func (c *ProjectController) GetProjectBySlug_Controller(w http.ResponseWriter, r
 			})
 
 		case errors.Is(err, model.ErrProjectNotFound):
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(model.ProjectResponse{
 				Success: false,
 				Message: "Project Not Found",
 			})
 
 		default:
+			log.Printf("[ERROR] GetProjectBySlug failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.ProjectResponse{
 				Success: false,
@@ -286,7 +290,7 @@ func (c *ProjectController) GetProjectBySlug_Controller(w http.ResponseWriter, r
 		return
 	}
 
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.PostProjectResponse{
 		ProjectResponse: model.ProjectResponse{
 			Success: true,
@@ -326,6 +330,7 @@ func (c *ProjectController) DeleteProjectById_Controller(w http.ResponseWriter, 
 			})
 
 		default:
+			log.Printf("[ERROR] DeleteProjectById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -365,7 +370,12 @@ func (c *ProjectController) UpdateProjectById_Controller(w http.ResponseWriter, 
 
 	var p model.Project
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		log.Println("Error Decoding JSON")
+		log.Printf("[WARN] Error decoding JSON: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ProjectResponse{
+			Success: false,
+			Message: "Invalid JSON payload",
+		})
 		return
 	}
 
@@ -387,6 +397,7 @@ func (c *ProjectController) UpdateProjectById_Controller(w http.ResponseWriter, 
 			})
 
 		default:
+			log.Printf("[ERROR] UpdateProjectById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
