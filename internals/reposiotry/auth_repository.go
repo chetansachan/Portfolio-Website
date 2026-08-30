@@ -25,6 +25,7 @@ func (r *AuthRepo) RegisterUser(ctx context.Context, name string, email string, 
 
 	if _, err := r.Pool.Exec(ctx, query, name, email, password); err != nil {
 		log.Printf("Database error: %v", err)
+		return err
 	}
 
 	return nil

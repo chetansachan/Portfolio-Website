@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"portfolio-website/internals/model"
@@ -17,8 +18,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		secretStr := os.Getenv("MY_JWT_SECRETKEY")
 		if secretStr == "" {
-			fmt.Println("MY_JWT_SECRETKEY is not set")
-			w.WriteHeader(http.StatusBadGateway)
+			log.Println("[ERROR] MY_JWT_SECRETKEY is not set in environment")
+			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Internal Server Error",
@@ -29,19 +30,19 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("session_token")
 		if err != nil {
 			if errors.Is(err, http.ErrNoCookie) {
-				fmt.Println("Cookie not found")
-				w.WriteHeader(http.StatusNotFound)
+				log.Println("[INFO] Authentication failed: session_token cookie not found")
+				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(model.Response{
 					Success: false,
-					Message: "Cookie not found",
+					Message: "Authentication required: session cookie not found",
 				})
 				return
 			}
-			fmt.Println("Cookie not found")
+			log.Printf("[ERROR] Failed to retrieve session cookie: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Server error",
+				Message: "Internal Server Error",
 			})
 			return
 		}
@@ -49,38 +50,36 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		access_token := cookie.Value
 
 		token, err := jwt.Parse(access_token, func(token *jwt.Token) (any, error) {
-			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-				fmt.Println("Unexpected Signing Method")
-				w.WriteHeader(http.StatusBadGateway)
-				json.NewEncoder(w).Encode(model.Response{
-					Success: false,
-					Message: "Internal Servor Error",
-				})
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(secretStr), nil
 		})
 
-		claims, ok := token.Claims.(jwt.MapClaims)
-		isValid := claims.VerifyExpiresAt(time.Now().Unix(), true)
-
 		if err != nil || !token.Valid {
-			fmt.Println("Invalid Token")
+			log.Printf("[WARN] Authentication failed: invalid token: %v", err)
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Invalid Token",
 			})
 			return
-		} else if !ok {
-			fmt.Println("Unknown claims type, cannot proceed")
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			log.Println("[WARN] Authentication failed: unknown claims type")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Unknown claims type",
 			})
 			return
-		} else if !isValid {
-			fmt.Println("Token is Expired")
+		}
+
+		isValid := claims.VerifyExpiresAt(time.Now().Unix(), true)
+		if !isValid {
+			log.Println("[WARN] Authentication failed: token is expired")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,

@@ -8,6 +8,8 @@ import (
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type AuthController struct {
@@ -75,10 +77,11 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 				Message: "Password too weak",
 			})
 		default:
-			w.WriteHeader(http.StatusBadRequest)
+			log.Printf("[ERROR] RegisterUser failed: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Error Creating Admin",
+				Message: "Internal Server Error",
 			})
 		}
 		return
@@ -125,16 +128,25 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 				Message: err.Error(),
 			})
 		default:
-			w.WriteHeader(http.StatusBadRequest)
+			if errors.Is(err, pgx.ErrNoRows) || err.Error() == "password incorrect" {
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(model.Response{
+					Success: false,
+					Message: "Invalid email or password",
+				})
+				return
+			}
+			log.Printf("[ERROR] Login failed: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Error Logging",
+				Message: "Internal Server Error",
 			})
 		}
 		return
 	}
 
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.LoginResponse{
 		Success: true,
 		Message: "Login Successful",
@@ -180,10 +192,11 @@ func (c *AuthController) RefreshToken_Controller(w http.ResponseWriter, r *http.
 
 	tokens, err := c.AuthService.RotateTokens_Service(r.Context(), req.RefreshToken)
 	if err != nil {
+		log.Printf("[WARN] Refresh token rotation failed: %v", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(model.LoginResponse{
 			Success: false,
-			Message: "Error",
+			Message: "Invalid or expired refresh token",
 		})
 		return
 	}
