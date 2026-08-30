@@ -74,7 +74,7 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,

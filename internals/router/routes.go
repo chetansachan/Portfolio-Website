@@ -56,7 +56,7 @@ func Router() http.Handler {
 	mux.Handle("PATCH /casestudy/updatecasestudy/{id}", middelware.AuthMiddleware(http.HandlerFunc(caseStudyController.UpdateCaseStudyById_Controller)))
 	mux.HandleFunc("POST /subscribe", newsletterController.CreateSubscriber_Controller)
 	mux.HandleFunc("POST /user/registeruser", authController.RegisterUser_Controller)
-	mux.HandleFunc("GET /user/login", authController.Login_Controller)
+	mux.HandleFunc("POST /user/login", authController.Login_Controller)
 	mux.Handle("POST /user/refresh", middelware.AuthMiddleware(http.HandlerFunc(authController.RefreshToken_Controller)))
 	mux.Handle("POST /upload", middelware.AuthMiddleware(http.HandlerFunc(uploadController.Upload_Controller)))
 	mux.HandleFunc("GET /files/{file}", uploadController.FindFile_Controller)
