@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"errors"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type BlogService struct {
@@ -46,7 +48,10 @@ func (s *BlogService) GetAllBlogs_Service(ctx context.Context, limit, offset int
 	blogs, totalblogs, err := s.BlogRepository.GetAllBlogs(ctx, limit, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get blogs from database: %v", err)
-		return []model.Blog{}, 0, model.ErrBlogNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []model.Blog{}, 0, model.ErrBlogNotFound
+		}
+		return []model.Blog{}, 0, err
 	}
 
 	return blogs, totalblogs, nil
@@ -61,7 +66,10 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 	blog, err := s.BlogRepository.GetBlogBySlug(ctx, slug)
 	if err != nil {
 		log.Printf("[ERROR] failed to get blog from database: %v", err)
-		return model.Blog{}, model.ErrBlogNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Blog{}, model.ErrBlogNotFound
+		}
+		return model.Blog{}, err
 	}
 
 	return blog, nil
@@ -70,13 +78,16 @@ func (s *BlogService) GetBlogBySlug_Service(ctx context.Context, slug string) (m
 func (s *BlogService) GetBlogById_Service(ctx context.Context, id uuid.UUID) (model.Blog, error) {
 	if id == uuid.Nil {
 		log.Println("[WARN] validation failed")
-		return model.Blog{}, model.ErrSlugValidation
+		return model.Blog{}, model.ErrIdValidation
 	}
 
 	blog, err := s.BlogRepository.GetBlogById(ctx, id)
 	if err != nil {
 		log.Printf("[ERROR] failed to get blog from database: %v", err)
-		return model.Blog{}, model.ErrBlogNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Blog{}, model.ErrBlogNotFound
+		}
+		return model.Blog{}, err
 	}
 
 	return blog, nil
@@ -104,7 +115,10 @@ func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, 
 	b, err := s.BlogRepository.GetBlogById(ctx, id)
 	if err != nil {
 		log.Printf("[ERROR] blog not found: %v", err)
-		return model.Blog{}, model.ErrBlogNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Blog{}, model.ErrBlogNotFound
+		}
+		return model.Blog{}, err
 	}
 
 	if title == "" {
@@ -126,7 +140,10 @@ func (s *BlogService) UpdateBlogById_Service(ctx context.Context, id uuid.UUID, 
 	blog, err := s.BlogRepository.UpdateBlogById(ctx, id, title, des, slug, content, banner, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to update blog from database: %v", err)
-		return model.Blog{}, model.ErrBlogNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Blog{}, model.ErrBlogNotFound
+		}
+		return model.Blog{}, err
 	}
 
 	return blog, nil

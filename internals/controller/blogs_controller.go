@@ -62,13 +62,14 @@ func (c *BlogController) CreateBlog_Controller(w http.ResponseWriter, r *http.Re
 			})
 
 		case errors.Is(err, model.ErrBlogAlreadyExist):
-			w.WriteHeader(http.StatusBadGateway)
+			w.WriteHeader(http.StatusConflict)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Blog Already exist",
 			})
 
 		default:
+			log.Printf("[ERROR] CreateBlog failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -149,6 +150,7 @@ func (c *BlogController) GetAllBlogs_Controller(w http.ResponseWriter, r *http.R
 				Message: "No Blog Found",
 			})
 		default:
+			log.Printf("[ERROR] GetAllBlogs failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -211,6 +213,7 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 			})
 
 		default:
+			log.Printf("[ERROR] GetBlogBySlug failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -229,7 +232,7 @@ func (c *BlogController) GetBlogBySlug_Controller(w http.ResponseWriter, r *http
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -269,6 +272,7 @@ func (c *BlogController) GetBlogById_Controller(w http.ResponseWriter, r *http.R
 				Message: "Blog not found",
 			})
 		default:
+			log.Printf("[ERROR] GetBlogById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -279,7 +283,7 @@ func (c *BlogController) GetBlogById_Controller(w http.ResponseWriter, r *http.R
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.PostBlogResponse{
 		Response: model.Response{
 			Success: true,
@@ -321,6 +325,7 @@ func (c *BlogController) DeleteBlogById_Controller(w http.ResponseWriter, r *htt
 			})
 
 		default:
+			log.Printf("[ERROR] DeleteBlogById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
@@ -387,6 +392,7 @@ func (c *BlogController) UpdateBlogById_Controller(w http.ResponseWriter, r *htt
 			})
 
 		default:
+			log.Printf("[ERROR] UpdateBlogById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,

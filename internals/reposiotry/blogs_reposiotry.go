@@ -2,7 +2,7 @@ package reposiotry
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jackc/pgx/v5"
 	"fmt"
 	"log"
 	"portfolio-website/internals/model"
@@ -27,6 +27,7 @@ func (r *BlogRepository) CreateBlog(ctx context.Context, Blog_Title string, Blog
 	var blog model.Blog
 	if err := r.Pool.QueryRow(ctx, query, Blog_Title, Blog_DES, Blog_Slug, Blog_Content, Blog_Banner, featured).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Is_Featured, &blog.Created_At); err != nil {
 		log.Printf("Database error: %v", err)
+		return model.Blog{}, err
 	}
 
 	return blog, nil
@@ -86,7 +87,7 @@ func (r *BlogRepository) GetBlogBySlug(ctx context.Context, slug string) (model.
 	`
 
 	var blog model.Blog
-	if err := r.Pool.QueryRow(ctx, query, slug).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Is_Featured, &blog.Created_At); err == sql.ErrNoRows {
+	if err := r.Pool.QueryRow(ctx, query, slug).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Is_Featured, &blog.Created_At); err == pgx.ErrNoRows {
 		log.Println("No user found with that slug")
 		return model.Blog{}, err
 	} else if err != nil {
@@ -103,7 +104,7 @@ func (r *BlogRepository) GetBlogById(ctx context.Context, id uuid.UUID) (model.B
 	`
 
 	var blog model.Blog
-	if err := r.Pool.QueryRow(ctx, query, id).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Is_Featured, &blog.Created_At); err == sql.ErrNoRows {
+	if err := r.Pool.QueryRow(ctx, query, id).Scan(&blog.Blog_ID, &blog.Blog_Title, &blog.Blog_DES, &blog.Blog_Slug, &blog.Blog_Content, &blog.Blog_Banner, &blog.Is_Featured, &blog.Created_At); err == pgx.ErrNoRows {
 		log.Println("No user found with that id")
 		return model.Blog{}, err
 	} else if err != nil {
