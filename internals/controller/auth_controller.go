@@ -44,14 +44,35 @@ func (c *AuthController) RegisterUser_Controller(w http.ResponseWriter, r *http.
 	err := c.AuthService.RegisterUser_Service(r.Context(), user.Name, user.Email, user.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, model.ErrInvalidEmail),
-			errors.Is(err, model.ErrPasswordRequired),
-			errors.Is(err, model.ErrPasswordTooShort),
-			errors.Is(err, model.ErrPasswordWeak):
+		case errors.Is(err, model.ErrInvalidEmail):
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: err.Error(),
+				Message: "Invalid Email",
+			})
+		case errors.Is(err,model.ErrUserAlreadyExist):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "User Already Exist",
+			})
+		case errors.Is(err, model.ErrPasswordRequired):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Password is required",
+			})
+		case errors.Is(err, model.ErrPasswordTooShort):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Password too short",
+			})
+		case errors.Is(err, model.ErrPasswordWeak):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Password too weak",
 			})
 		default:
 			w.WriteHeader(http.StatusBadRequest)
@@ -118,7 +139,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 		Success: true,
 		Message: "Login Successful",
 		Tokens: model.TokenDetail{
-			AccessToken: tokens.AccessToken,
+			AccessToken:  tokens.AccessToken,
 			RefreshToken: tokens.RefreshToken,
 		},
 	},
@@ -190,7 +211,7 @@ func (c *AuthController) RefreshToken_Controller(w http.ResponseWriter, r *http.
 		Success: true,
 		Message: "Token refreshed successfully",
 		Tokens: model.TokenDetail{
-			AccessToken: tokens.AccessToken,
+			AccessToken:  tokens.AccessToken,
 			RefreshToken: tokens.RefreshToken,
 		},
 	})

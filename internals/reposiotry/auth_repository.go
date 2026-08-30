@@ -36,8 +36,9 @@ func (r *AuthRepo) Login(ctx context.Context, email string) (model.User, error) 
 	`
 
 	var user model.User
-	if err := r.Pool.QueryRow(ctx, query, email).Scan(&user.UserId, &user.Name, &user.Email, &user.Password, &user.Is_Admin, &user.Login_At); err != nil {
-		log.Printf("Database error: %v", err)
+	err := r.Pool.QueryRow(ctx, query, email).Scan(&user.UserId, &user.Name, &user.Email, &user.Password, &user.Is_Admin, &user.Login_At)
+	if err != nil {
+		return model.User{}, err
 	}
 
 	return user, nil

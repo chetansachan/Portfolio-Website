@@ -71,6 +71,14 @@ func (s *AuthService) RegisterUser_Service(ctx context.Context, name string, ema
 	if !re.MatchString(email) {
 		return model.ErrInvalidEmail
 	}
+
+	if s.AuthRepo != nil {
+		_, err := s.AuthRepo.Login(ctx, email)
+		if err == nil {
+			return model.ErrUserAlreadyExist
+		}
+	}
+
 	if password == "" {
 		return model.ErrPasswordRequired
 	}
