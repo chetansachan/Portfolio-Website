@@ -56,7 +56,7 @@ func TestGetBlogBySlug_Controller(t *testing.T) {
 			getBySlugFunc: func(ctx context.Context, slug string) (model.Blog, error) {
 				return sampleBlog, nil
 			},
-			expectedStatus:  http.StatusFound,
+			expectedStatus:  http.StatusOK,
 			expectedSuccess: true,
 			expectedMessage: "Blog Found Successfully",
 			expectData:      true,
@@ -157,7 +157,7 @@ func TestGetBlogBySlug_Controller(t *testing.T) {
 			}
 
 			if tt.expectData {
-				var resp model.GetBlogsResponse
+				var resp model.PostBlogResponse
 				if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
 				}
@@ -167,7 +167,7 @@ func TestGetBlogBySlug_Controller(t *testing.T) {
 				if resp.Message != tt.expectedMessage {
 					t.Errorf("Message: got %q, want %q", resp.Message, tt.expectedMessage)
 				}
-				if len(resp.Data) != 1 || resp.Data[0].Blog_Slug != tt.pathSlug {
+				if resp.Data.Blog_Slug != tt.pathSlug {
 					t.Errorf("Data: unexpected payload %+v", resp.Data)
 				}
 			} else {

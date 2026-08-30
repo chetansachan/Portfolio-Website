@@ -58,7 +58,7 @@ func TestGetProjectById_Controller(t *testing.T) {
 			getByIdFunc: func(ctx context.Context, id uuid.UUID) (model.Project, error) {
 				return sampleProject, nil
 			},
-			expectedStatus:  http.StatusFound,
+			expectedStatus:  http.StatusOK,
 			expectedSuccess: true,
 			expectedMessage: "Project Found Successfully",
 			expectData:      true,
@@ -118,7 +118,7 @@ func TestGetProjectById_Controller(t *testing.T) {
 			getByIdFunc: func(ctx context.Context, id uuid.UUID) (model.Project, error) {
 				return model.Project{}, model.ErrProjectNotFound
 			},
-			expectedStatus:  http.StatusBadRequest,
+			expectedStatus:  http.StatusNotFound,
 			expectedSuccess: false,
 			expectedMessage: "Project Not Found",
 		},

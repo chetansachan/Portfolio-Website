@@ -156,7 +156,7 @@ func TestCreateProject_Controller(t *testing.T) {
 			createFunc: func(ctx context.Context, name, des, banner, content, slug string, featured bool) (model.Project, error) {
 				return model.Project{}, model.ErrProjectAlreadyExist
 			},
-			expectedStatus:  http.StatusBadRequest,
+			expectedStatus:  http.StatusConflict,
 			expectedSuccess: false,
 			expectedMessage: "Project Already Exist",
 		},

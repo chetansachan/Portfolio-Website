@@ -57,7 +57,7 @@ func TestGetBlogById_Controller(t *testing.T) {
 			getByIdFunc: func(ctx context.Context, id uuid.UUID) (model.Blog, error) {
 				return sampleBlog, nil
 			},
-			expectedStatus:  http.StatusFound,
+			expectedStatus:  http.StatusOK,
 			expectedSuccess: true,
 			expectedMessage: "Blog Found Successfully",
 			expectData:      true,

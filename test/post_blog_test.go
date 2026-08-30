@@ -230,7 +230,7 @@ func TestPostBlog_Controller(t *testing.T) {
 			postFunc: func(ctx context.Context, title, des, slug, content, banner string) (model.Blog, error) {
 				return sampleBlog, model.ErrBlogAlreadyExist
 			},
-			expectedStatus:  http.StatusBadGateway,
+			expectedStatus:  http.StatusConflict,
 			expectedSuccess: false,
 			expectedMessage: "Blog Already exist",
 		},

@@ -57,7 +57,7 @@ func TestGetProjectBySlug_Controller(t *testing.T) {
 			getBySlugFunc: func(ctx context.Context, slug string) (model.Project, error) {
 				return sampleProject, nil
 			},
-			expectedStatus:  http.StatusFound,
+			expectedStatus:  http.StatusOK,
 			expectedSuccess: true,
 			expectedMessage: "Project Found Successfully",
 			expectData:      true,
@@ -106,7 +106,7 @@ func TestGetProjectBySlug_Controller(t *testing.T) {
 			getBySlugFunc: func(ctx context.Context, slug string) (model.Project, error) {
 				return model.Project{}, model.ErrProjectNotFound
 			},
-			expectedStatus:  http.StatusBadRequest,
+			expectedStatus:  http.StatusNotFound,
 			expectedSuccess: false,
 			expectedMessage: "Project Not Found",
 		},
