@@ -9,7 +9,7 @@ import (
 type PaginationProjectMeta struct {
 	CurrentPage   int  `json:"current_page"`
 	PageSize      int  `json:"page_size"`
-	TotalProjects int  `json:"total_blogs"`
+	TotalProjects int  `json:"total_projects"`
 	TotalPages    int  `json:"total_pages"`
 	HasNext       bool `json:"has_next"`
 	HasPrev       bool `json:"has_prev"`
