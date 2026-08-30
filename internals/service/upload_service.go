@@ -63,11 +63,14 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 		}
 	}
 
-	re2 := regexp.MustCompile(`^[^/]+/([\w+-]+)$`)
-	extension := re2.FindStringSubmatch(mimeType)
-
 	if len(matches) < 2 {
 		return "", fmt.Errorf("Invalid MIME type structure")
+	}
+
+	re2 := regexp.MustCompile(`^[^/]+/([\w+-]+)$`)
+	extension := re2.FindStringSubmatch(mimeType)
+	if len(extension) < 2 {
+		return "", fmt.Errorf("Invalid MIME type details")
 	}
 
 	extractedExt := AllowedExtension(extension[1])
@@ -95,7 +98,7 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 	}
 
 	if err := s.UploadRepo.SaveFiles(ctx, filename, string(extractedExt), mimeType); err != nil {
-		return "", fmt.Errorf("Error Saving File into Data base")
+		return "", fmt.Errorf("Error Saving File into Database: %w", err)
 	}
 
 	_, baseUrl := config.Load()
@@ -118,12 +121,12 @@ func (s *UploadService) FindFile_Service(ctx context.Context, filename string) (
 func (s *UploadService) DeleteFile_Service(ctx context.Context, filename string) error {
 	err := s.UploadRepo.DeleteFileByName(ctx, filename)
 	if err != nil {
-		return fmt.Errorf("failed to delete file from database")
+		return fmt.Errorf("failed to delete file from database: %w", err)
 	}
 
 	filePath := "data/uploads/" + filename
 	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to delete file from disk")
+		return fmt.Errorf("failed to delete file from disk: %w", err)
 	}
 
 	return nil

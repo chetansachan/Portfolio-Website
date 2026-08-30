@@ -17,7 +17,7 @@ func Connect(ctx context.Context, config string) error {
 
 	Pool, err = pgxpool.NewWithConfig(ctx, configstg)
 	if err != nil {
-		log.Fatal("Error Connecting to database")
+		log.Fatalf("Error Connecting to database: %v", err)
 	}
 
 	if err := Pool.Ping(context.Background()); err != nil {

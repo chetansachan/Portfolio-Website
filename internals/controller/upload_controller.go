@@ -3,9 +3,11 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
+	"strings"
 )
 
 type Upload struct {
@@ -62,6 +64,17 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 
 	url, err := c.UploadService.Upload_Service(r.Context(), file.File)
 	if err != nil {
+		errStr := err.Error()
+		if strings.Contains(errStr, "directory") || strings.Contains(errStr, "writing file") || strings.Contains(errStr, "Database") {
+			log.Printf("[ERROR] File upload failed: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal Server Error",
+			})
+			return
+		}
+		log.Printf("[WARN] File upload validation failed: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
@@ -129,6 +142,7 @@ func (c *UploadController) DeleteFile_Controller(w http.ResponseWriter, r *http.
 			return
 		}
 
+		log.Printf("[ERROR] DeleteFile failed: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
