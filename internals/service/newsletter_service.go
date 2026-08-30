@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
 	"regexp"
 )
@@ -20,10 +20,8 @@ func (s *NewsletterService) CreateSubscriber_Service(ctx context.Context, email 
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 
-	if re.MatchString(email) {
-		fmt.Printf("%s is valid\n", email)
-	} else {
-		return fmt.Errorf("%s is invalid\n", email)
+	if !re.MatchString(email) {
+		return model.ErrInvalidEmail
 	}
 
 	if err := s.BlogRepository.CreateSubscriber(ctx, email); err != nil {

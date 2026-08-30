@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"portfolio-website/internals/model"
@@ -39,10 +40,19 @@ func (c *NewsletterController) CreateSubscriber_Controller(w http.ResponseWriter
 	}
 
 	if err := c.NewsletterService.CreateSubscriber_Service(r.Context(), req.Email); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		if errors.Is(err, model.ErrInvalidEmail) {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid email",
+			})
+			return
+		}
+		log.Printf("[ERROR] CreateSubscriber failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
-			Message: "Invalid email",
+			Message: "Internal Server Error",
 		})
 		return
 	}
