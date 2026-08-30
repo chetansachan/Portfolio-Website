@@ -20,7 +20,7 @@ func main() {
 	fmt.Println(cfg)
 
 	if err := database.Connect(ctx, cfg); err != nil {
-		fmt.Println("Error Connecting to database")
+		log.Fatalf("Error Connecting to database: %v", err)
 		return
 	}
 	fmt.Println("Successfully connected to database")
