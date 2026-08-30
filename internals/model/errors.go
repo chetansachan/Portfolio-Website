@@ -16,5 +16,6 @@ var (
 	ErrInvalidEmail          = errors.New("Invalid email format")
 	ErrPasswordRequired      = errors.New("Password is required and cannot be empty")
 	ErrPasswordTooShort      = errors.New("Password length must be at least 8 characters")
-	ErrPasswordWeak          = errors.New("Password must be strong: must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+	ErrPasswordWeak          = errors.New("Password must be strong")
+	ErrUserAlreadyExist      = errors.New("User Already Exist")
 )
