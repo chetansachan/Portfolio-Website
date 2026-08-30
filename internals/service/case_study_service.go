@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"errors"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type CaseStudyService struct {
@@ -46,7 +48,10 @@ func (s *CaseStudyService) GetAllCaseStudies_Service(ctx context.Context, limit,
 	case_studies, totalcasestudies, err := s.CaseStudyRepository.GetAllCaseStudies(ctx, limit, offset, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to get case studies from database: %v", err)
-		return []model.Case_Study{}, 0, model.ErrCaseStudyNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []model.Case_Study{}, 0, model.ErrCaseStudyNotFound
+		}
+		return []model.Case_Study{}, 0, err
 	}
 
 	return case_studies, totalcasestudies, nil
@@ -61,7 +66,10 @@ func (s *CaseStudyService) GetCaseStudyBySlug_Service(ctx context.Context, slug 
 	case_study, err := s.CaseStudyRepository.GetCaseStudyBySlug(ctx, slug)
 	if err != nil {
 		log.Printf("[ERROR] failed to get case study from database: %v", err)
-		return model.Case_Study{}, model.ErrCaseStudyNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Case_Study{}, model.ErrCaseStudyNotFound
+		}
+		return model.Case_Study{}, err
 	}
 
 	return case_study, nil
@@ -76,7 +84,10 @@ func (s *CaseStudyService) GetCaseStudyById_Service(ctx context.Context, id uuid
 	case_study, err := s.CaseStudyRepository.GetCaseStudyById(ctx, id)
 	if err != nil {
 		log.Printf("[ERROR] failed to get case study from database: %v", err)
-		return model.Case_Study{}, model.ErrCaseStudyNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Case_Study{}, model.ErrCaseStudyNotFound
+		}
+		return model.Case_Study{}, err
 	}
 
 	return case_study, nil
@@ -104,7 +115,10 @@ func (s *CaseStudyService) UpdateCaseStudyById_Service(ctx context.Context, id u
 	c, err := s.CaseStudyRepository.GetCaseStudyById(ctx, id)
 	if err != nil {
 		log.Printf("[ERROR] case study not found: %v", err)
-		return model.Case_Study{}, model.ErrCaseStudyNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Case_Study{}, model.ErrCaseStudyNotFound
+		}
+		return model.Case_Study{}, err
 	}
 
 	if title == "" {
@@ -126,7 +140,10 @@ func (s *CaseStudyService) UpdateCaseStudyById_Service(ctx context.Context, id u
 	case_study, err := s.CaseStudyRepository.UpdateCaseStudyById(ctx, id, title, des, slug, content, banner, featured)
 	if err != nil {
 		log.Printf("[ERROR] failed to update case study: %v", err)
-		return model.Case_Study{}, model.ErrCaseStudyNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Case_Study{}, model.ErrCaseStudyNotFound
+		}
+		return model.Case_Study{}, err
 	}
 
 	return case_study, nil

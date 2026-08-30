@@ -2,7 +2,7 @@ package reposiotry
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jackc/pgx/v5"
 	"fmt"
 	"log"
 	"portfolio-website/internals/model"
@@ -69,7 +69,7 @@ func (r *CaseStudyRepository) GetAllCaseStudies(ctx context.Context, limit int, 
 			&case_study.Case_Study_Banner,
 			&case_study.Is_Featured,
 			&case_study.Created_At,
-		); err == sql.ErrNoRows {
+		); err == pgx.ErrNoRows {
 			log.Printf("Database error: %v", err)
 			return []model.Case_Study{}, 0, err
 		} else if err != nil {
@@ -101,7 +101,7 @@ func (r *CaseStudyRepository) GetCaseStudyBySlug(ctx context.Context, slug strin
 		&case_study.Case_Study_Banner,
 		&case_study.Is_Featured,
 		&case_study.Created_At,
-	); err == sql.ErrNoRows {
+	); err == pgx.ErrNoRows {
 		log.Println("No Case Study found with that slug")
 		return model.Case_Study{}, err
 	} else if err != nil {
@@ -127,7 +127,7 @@ func (r *CaseStudyRepository) GetCaseStudyById(ctx context.Context, id uuid.UUID
 		&case_study.Case_Study_Banner,
 		&case_study.Is_Featured,
 		&case_study.Created_At,
-	); err == sql.ErrNoRows {
+	); err == pgx.ErrNoRows {
 		log.Println("No Case Study found with that ID")
 		return model.Case_Study{}, err
 	} else if err != nil {

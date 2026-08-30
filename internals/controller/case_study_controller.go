@@ -58,13 +58,14 @@ func (c *CaseStudyController) CreateCaseStudy_Controller(w http.ResponseWriter, 
 			})
 
 		case errors.Is(err, model.ErrCaseStudyAlreadyExist):
-			w.WriteHeader(http.StatusBadGateway)
+			w.WriteHeader(http.StatusConflict)
 			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
 				Message: "Case Study Already exist",
 			})
 
 		default:
+			log.Printf("[ERROR] CreateCaseStudy failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
@@ -145,6 +146,7 @@ func (c *CaseStudyController) GetAllCaseStudies_Controller(w http.ResponseWriter
 				Message: "No Case Studies Found",
 			})
 		default:
+			log.Printf("[ERROR] GetAllCaseStudies failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
@@ -207,6 +209,7 @@ func (c *CaseStudyController) GetCaseStudyBySlug_Controller(w http.ResponseWrite
 			})
 
 		default:
+			log.Printf("[ERROR] GetCaseStudyBySlug failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
@@ -225,7 +228,7 @@ func (c *CaseStudyController) GetCaseStudyBySlug_Controller(w http.ResponseWrite
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -265,6 +268,7 @@ func (c *CaseStudyController) GetCaseStudyById_Controller(w http.ResponseWriter,
 				Message: "Case study not found",
 			})
 		default:
+			log.Printf("[ERROR] GetCaseStudyById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
@@ -275,7 +279,7 @@ func (c *CaseStudyController) GetCaseStudyById_Controller(w http.ResponseWriter,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.PostCaseStudyResponse{
 		CaseStudyResponse: model.CaseStudyResponse{
 			Success: true,
@@ -315,6 +319,7 @@ func (c *CaseStudyController) DeleteCaseStudyById_Controller(w http.ResponseWrit
 			})
 
 		default:
+			log.Printf("[ERROR] DeleteCaseStudyById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
@@ -381,6 +386,7 @@ func (c *CaseStudyController) UpdateCaseStudyById_Controller(w http.ResponseWrit
 			})
 
 		default:
+			log.Printf("[ERROR] UpdateCaseStudyById failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.CaseStudyResponse{
 				Success: false,
