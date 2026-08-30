@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -111,11 +113,14 @@ func (s *AuthService) Login_Service(ctx context.Context, email string, password 
 
 	user, err := s.AuthRepo.Login(ctx, email)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.TokenDetail{}, model.ErrInvalidCredentials
+		}
 		return model.TokenDetail{}, fmt.Errorf("error finding user: %w", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return model.TokenDetail{}, fmt.Errorf("password incorrect")
+		return model.TokenDetail{}, model.ErrInvalidCredentials
 	}
 
 	accessToken, err := s.GenerateToken(ctx, user, false)
@@ -264,4 +269,3 @@ func (s *AuthService) DeleteUserByID_Service(ctx context.Context, id uuid.UUID) 
 
 	return nil
 }
-

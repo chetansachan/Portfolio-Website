@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type AuthController struct {
@@ -128,15 +127,13 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 				Success: false,
 				Message: err.Error(),
 			})
+		case errors.Is(err, model.ErrInvalidCredentials):
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid email or password",
+			})
 		default:
-			if errors.Is(err, pgx.ErrNoRows) || err.Error() == "password incorrect" {
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(model.Response{
-					Success: false,
-					Message: "Invalid email or password",
-				})
-				return
-			}
 			log.Printf("[ERROR] Login failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{

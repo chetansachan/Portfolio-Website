@@ -43,7 +43,7 @@ func (r *ProjectRepository) GetAllProjects(ctx context.Context, limit int, offse
 
 	rows, err := r.Pool.Query(ctx, "SELECT project_id, project_name, project_des, project_banner, project_content, project_slug, is_featured, created_at FROM projects WHERE ($1::boolean IS NULL OR is_featured = $1) ORDER BY created_at LIMIT $2 OFFSET $3", featured, limit, offset)
 	if err != nil {
-		return []model.Project{}, 0, model.ErrProjectNotFound
+		return []model.Project{}, 0, fmt.Errorf("query error: %w", err)
 	}
 	defer rows.Close()
 

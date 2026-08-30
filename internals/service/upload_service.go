@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"portfolio-website/internals/config"
+	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
 	"regexp"
 
@@ -64,23 +65,23 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 	}
 
 	if len(matches) < 2 {
-		return "", fmt.Errorf("Invalid MIME type structure")
+		return "", model.ErrInvalidMimeStructure
 	}
 
 	re2 := regexp.MustCompile(`^[^/]+/([\w+-]+)$`)
 	extension := re2.FindStringSubmatch(mimeType)
 	if len(extension) < 2 {
-		return "", fmt.Errorf("Invalid MIME type details")
+		return "", model.ErrInvalidMimeDetails
 	}
 
 	extractedExt := AllowedExtension(extension[1])
 	if !validExtensions[extractedExt] {
-		return "", fmt.Errorf("Error: extension '%s' is not allowed!\n", extractedExt)
+		return "", fmt.Errorf("%w: extension '%s' is not allowed", model.ErrExtensionNotAllowed, extractedExt)
 	}
 
 	data, err := Base64.StdEncoding.DecodeString(base64Str)
 	if err != nil {
-		return "", fmt.Errorf("Error Decoding String")
+		return "", model.ErrDecodingBase64
 	}
 
 	if err := os.Mkdir("data", 0750); err != nil && !os.IsExist(err) {
@@ -112,7 +113,10 @@ func (s *UploadService) FindFile_Service(ctx context.Context, filename string) (
 	filePath := "data/uploads/" + filename
 	_, err := os.Stat(filePath)
 	if err != nil {
-		return "", fmt.Errorf("file not found: %w", err)
+		if os.IsNotExist(err) {
+			return "", model.ErrFileNotFound
+		}
+		return "", fmt.Errorf("file error: %w", err)
 	}
 
 	return filePath, nil

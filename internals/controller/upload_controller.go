@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
-	"strings"
 )
 
 type Upload struct {
@@ -64,22 +63,25 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 
 	url, err := c.UploadService.Upload_Service(r.Context(), file.File)
 	if err != nil {
-		errStr := err.Error()
-		if strings.Contains(errStr, "directory") || strings.Contains(errStr, "writing file") || strings.Contains(errStr, "Database") {
+		switch {
+		case errors.Is(err, model.ErrInvalidMimeStructure),
+			errors.Is(err, model.ErrInvalidMimeDetails),
+			errors.Is(err, model.ErrExtensionNotAllowed),
+			errors.Is(err, model.ErrDecodingBase64):
+			log.Printf("[WARN] File upload validation failed: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: err.Error(),
+			})
+		default:
 			log.Printf("[ERROR] File upload failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
 				Message: "Internal Server Error",
 			})
-			return
 		}
-		log.Printf("[WARN] File upload validation failed: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "File Type Not Accepted",
-		})
 		return
 	}
 
@@ -107,10 +109,19 @@ func (c *UploadController) FindFile_Controller(w http.ResponseWriter, r *http.Re
 	filePath, err2 := c.UploadService.FindFile_Service(r.Context(), fileName)
 	if err2 != nil {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
+		if errors.Is(err2, model.ErrFileNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "File Not Exist",
+			})
+			return
+		}
+		log.Printf("[ERROR] FindFile failed: %v", err2)
+		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(model.Response{
 			Success: false,
-			Message: "File Not Exist",
+			Message: "Internal Server Error",
 		})
 		return
 	}

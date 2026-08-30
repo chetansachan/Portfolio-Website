@@ -61,7 +61,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Invalid Token",
+				Message: "Invalid token",
 			})
 			return
 		}
@@ -83,7 +83,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(model.Response{
 				Success: false,
-				Message: "Token is Expired",
+				Message: "Token is expired",
 			})
 			return
 		}
