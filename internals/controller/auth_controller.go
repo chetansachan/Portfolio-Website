@@ -81,7 +81,7 @@ func (c *AuthController) Login_Controller(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	tokens, err := c.AuthService.Login_Service(r.Context(), u.Name, u.Email, u.Password)
+	tokens, err := c.AuthService.Login_Service(r.Context(), u.Email, u.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(model.Response{

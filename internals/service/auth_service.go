@@ -67,7 +67,7 @@ func (s *AuthService) RegisterUser_Service(ctx context.Context, name string, ema
 	return nil
 }
 
-func (s *AuthService) Login_Service(ctx context.Context, name string, email string, password string) (model.TokenDetail, error) {
+func (s *AuthService) Login_Service(ctx context.Context, email string, password string) (model.TokenDetail, error) {
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 
