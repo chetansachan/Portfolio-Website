@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/service"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -199,24 +198,6 @@ func (c *AuthController) RefreshToken_Controller(w http.ResponseWriter, r *http.
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    tokens.AccessToken,
-		Expires:  time.Now().Add(15 * time.Minute),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-	})
-
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.LoginResponse{
 		Success: true,
@@ -289,34 +270,43 @@ func (c *AuthController) Logout_Controller(w http.ResponseWriter, r *http.Reques
 	}
 
 	cookie, err := r.Cookie("refresh_token")
-	if err == nil && cookie.Value != "" {
-		err = c.AuthService.Logout_Service(r.Context(), cookie.Value)
-		if err != nil {
-			log.Printf("[ERROR] Logout service failed: %v", err)
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Refresh token cookie not found",
+			})
+			return
 		}
-	} else if err != nil && !errors.Is(err, http.ErrNoCookie) {
 		log.Printf("[ERROR] Failed to retrieve refresh token cookie: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Internal Server Error",
+		})
+		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    "",
-		Path:     "/",
-		Expires:  time.Unix(0, 0),
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   true,
-	})
+	if cookie.Value == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Refresh token is empty",
+		})
+		return
+	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    "",
-		Path:     "/",
-		Expires:  time.Unix(0, 0),
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   true,
-	})
+	err = c.AuthService.Logout_Service(r.Context(), cookie.Value)
+	if err != nil {
+		log.Printf("[ERROR] Logout service failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Failed to log out user",
+		})
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.Response{
@@ -324,4 +314,3 @@ func (c *AuthController) Logout_Controller(w http.ResponseWriter, r *http.Reques
 		Message: "User Logged Out Successfully",
 	})
 }
-

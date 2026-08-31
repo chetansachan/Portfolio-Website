@@ -57,7 +57,7 @@ func Router() http.Handler {
 	mux.HandleFunc("POST /subscribe", newsletterController.CreateSubscriber_Controller)
 	mux.HandleFunc("POST /user/registeruser", authController.RegisterUser_Controller)
 	mux.HandleFunc("POST /user/login", authController.Login_Controller)
-	mux.HandleFunc("POST /user/logout", authController.Logout_Controller)
+	mux.Handle("POST /user/logout", middelware.AuthMiddleware(http.HandlerFunc(authController.Logout_Controller)))
 	mux.Handle("POST /user/refresh", middelware.AuthMiddleware(http.HandlerFunc(authController.RefreshToken_Controller)))
 	mux.Handle("DELETE /user/deleteuser/{id}", middelware.AuthMiddleware(http.HandlerFunc(authController.DeleteUserByID_Controller)))
 	mux.Handle("POST /upload", middelware.AuthMiddleware(http.HandlerFunc(uploadController.Upload_Controller)))
