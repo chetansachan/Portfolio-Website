@@ -23,4 +23,6 @@ var (
 	ErrInvalidMimeDetails    = errors.New("Invalid MIME type details")
 	ErrExtensionNotAllowed   = errors.New("File extension is not allowed")
 	ErrDecodingBase64        = errors.New("Failed to decode base64 file data")
+	ErrInvalidToken          = errors.New("Invalid or expired token")
+	ErrTokenNotFound         = errors.New("Token not found")
 )

@@ -299,12 +299,27 @@ func (c *AuthController) Logout_Controller(w http.ResponseWriter, r *http.Reques
 
 	err = c.AuthService.Logout_Service(r.Context(), cookie.Value)
 	if err != nil {
-		log.Printf("[ERROR] Logout service failed: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(model.Response{
-			Success: false,
-			Message: "Failed to log out user",
-		})
+		switch {
+		case errors.Is(err, model.ErrInvalidToken):
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid or expired refresh token",
+			})
+		case errors.Is(err, model.ErrTokenNotFound):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Refresh token not found or already logged out",
+			})
+		default:
+			log.Printf("[ERROR] Logout service failed: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal Server Error",
+			})
+		}
 		return
 	}
 

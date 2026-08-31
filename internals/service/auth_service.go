@@ -271,6 +271,30 @@ func (s *AuthService) DeleteUserByID_Service(ctx context.Context, id uuid.UUID) 
 }
 
 func (s *AuthService) Logout_Service(ctx context.Context, rawRefreshToken string) error {
+	token, err := jwt.ParseWithClaims(rawRefreshToken, &RefreshTokenClaims{}, func(token *jwt.Token) (any, error) {
+		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		secretStr := os.Getenv("MY_JWT_SECRETKEY")
+		if secretStr == "" {
+			return nil, fmt.Errorf("MY_JWT_SECRETKEY is not set")
+		}
+		return []byte(secretStr), nil
+	})
+
+	if err != nil || !token.Valid {
+		return model.ErrInvalidToken
+	}
+
 	hashedTkn := HashToken(rawRefreshToken)
+	storedTkn, err := s.AuthRepo.GetRefreshToken(ctx, hashedTkn)
+	if err != nil {
+		return model.ErrTokenNotFound
+	}
+
+	if storedTkn.IsRevoked {
+		return model.ErrTokenNotFound
+	}
+
 	return s.AuthRepo.Logout(ctx, hashedTkn)
 }
