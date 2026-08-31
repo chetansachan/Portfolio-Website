@@ -30,11 +30,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("access_token")
 		if err != nil {
 			if errors.Is(err, http.ErrNoCookie) {
-				log.Println("[INFO] Authentication failed: session_token cookie not found")
+				log.Println("[INFO] cookie not found")
 				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(model.Response{
 					Success: false,
-					Message: "Authentication required: session cookie not found",
+					Message: "Cookie not found",
 				})
 				return
 			}

@@ -14,9 +14,9 @@ type Upload struct {
 }
 
 type UploadResponse struct {
-	Success bool
-	Message string
-	Url     string
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	File    string `json:"file"`
 }
 
 const maxFileSize = 10 * 1024 * 1024
@@ -43,8 +43,8 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 
-	var file Upload
-	if err := json.NewDecoder(r.Body).Decode(&file); err != nil {
+	var File Upload
+	if err := json.NewDecoder(r.Body).Decode(&File); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		var maxBytesErr *http.MaxBytesError
 		if errors.As(err, &maxBytesErr) {
@@ -61,7 +61,7 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	url, err := c.UploadService.Upload_Service(r.Context(), file.File)
+	file, err := c.UploadService.Upload_Service(r.Context(), File.File)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrInvalidMimeStructure),
@@ -89,7 +89,7 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(UploadResponse{
 		Success: true,
 		Message: "File Uploaded",
-		Url:     url,
+		File:    file,
 	})
 }
 
