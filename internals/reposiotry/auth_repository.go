@@ -112,3 +112,13 @@ func (r *AuthRepo) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *AuthRepo) Logout(ctx context.Context, token string) error {
+	query := `
+		UPDATE refresh_tokens
+		SET is_revoked = true
+		WHERE token = $1
+	`
+	_, err := r.Pool.Exec(ctx, query, token)
+	return err
+}

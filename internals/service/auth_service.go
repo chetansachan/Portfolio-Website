@@ -269,3 +269,8 @@ func (s *AuthService) DeleteUserByID_Service(ctx context.Context, id uuid.UUID) 
 
 	return nil
 }
+
+func (s *AuthService) Logout_Service(ctx context.Context, rawRefreshToken string) error {
+	hashedTkn := HashToken(rawRefreshToken)
+	return s.AuthRepo.Logout(ctx, hashedTkn)
+}
