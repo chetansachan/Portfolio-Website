@@ -275,3 +275,53 @@ func (c *AuthController) DeleteUserByID_Controller(w http.ResponseWriter, r *htt
 		Message: "User Deleted Successfully",
 	})
 }
+
+func (c *AuthController) Logout_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	cookie, err := r.Cookie("refresh_token")
+	if err == nil && cookie.Value != "" {
+		err = c.AuthService.Logout_Service(r.Context(), cookie.Value)
+		if err != nil {
+			log.Printf("[ERROR] Logout service failed: %v", err)
+		}
+	} else if err != nil && !errors.Is(err, http.ErrNoCookie) {
+		log.Printf("[ERROR] Failed to retrieve refresh token cookie: %v", err)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.Response{
+		Success: true,
+		Message: "User Logged Out Successfully",
+	})
+}
+
