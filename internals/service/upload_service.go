@@ -84,18 +84,15 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 		return "", model.ErrDecodingBase64
 	}
 
-	if err := os.Mkdir("data", 0750); err != nil && !os.IsExist(err) {
-		return "", fmt.Errorf("Error making directory")
-	}
-	if err := os.Mkdir("data/uploads", 0750); err != nil && !os.IsExist(err) {
-		return "", fmt.Errorf("Error making directory")
+	if err := os.MkdirAll("data/uploads", 0755); err != nil {
+		return "", fmt.Errorf("Error making directory: %w", err)
 	}
 
 	id := uuid.NewString()
 	folder := "data/uploads/"
 	filename := id + "." + string(extractedExt)
 	if err := os.WriteFile(folder+filename, data, 0666); err != nil {
-		return "", fmt.Errorf("Error writing file")
+		return "", fmt.Errorf("Error writing file: %w", err)
 	}
 
 	if err := s.UploadRepo.SaveFiles(ctx, filename, string(extractedExt), mimeType); err != nil {
