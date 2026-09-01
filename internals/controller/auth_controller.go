@@ -240,6 +240,12 @@ func (c *AuthController) DeleteUserByID_Controller(w http.ResponseWriter, r *htt
 				Success: false,
 				Message: "Id is required",
 			})
+		case errors.Is(err, model.ErrUserNotFound)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "User Not Found",
+			})
 		default:
 			log.Printf("[ERROR] RegisterUser failed: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
