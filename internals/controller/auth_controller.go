@@ -247,8 +247,8 @@ func (c *AuthController) DeleteUserByID_Controller(w http.ResponseWriter, r *htt
 				Success: false,
 				Message: "Internal Server Error",
 			})
-			return
 		}
+		return
 	}
 
 	json.NewEncoder(w).Encode(model.Response{
@@ -327,5 +327,54 @@ func (c *AuthController) Logout_Controller(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(model.Response{
 		Success: true,
 		Message: "User Logged Out Successfully",
+	})
+}
+
+func (c *AuthController) MakeAdmin_Controller(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Method Not Allowed",
+		})
+		return
+	}
+
+	var u model.User
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		log.Printf("[WARN] Invalid JSON payload: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.Response{
+			Success: false,
+			Message: "Invalid JSON Payload",
+		})
+		return
+	}
+
+	err := c.AuthService.MakeAdmin_Service(r.Context(), u.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrInvalidEmail):
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Invalid Email Id",
+			})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "Internal Server Error",
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.Response{
+		Success: true,
+		Message: "You Are Now Admin",
 	})
 }
