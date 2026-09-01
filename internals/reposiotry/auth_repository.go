@@ -134,7 +134,8 @@ func (r *AuthRepo) MakeAdmin(ctx context.Context, email string) error {
 		WHERE email = $1
 	`
 
-	_, err := r.Pool.Exec(ctx, query, email)
+	var user model.User
+	err := r.Pool.QueryRow(ctx, query, email).Scan(&user.UserId, &user.Name, &user.Email, &user.Password, &user.Is_Admin, &user.Login_At)
 	if err != nil {
 		log.Printf("Database error: %v", err)
 		return err
