@@ -24,11 +24,7 @@ type AuthService struct {
 	AuthRepo *reposiotry.AuthRepo
 }
 
-type AccessTokenClaims struct {
-	jwt.RegisteredClaims
-	Email   string
-	IsAdmin bool
-}
+type AccessTokenClaims = model.AccessTokenClaims
 
 type RefreshTokenClaims struct {
 	jwt.RegisteredClaims
@@ -297,4 +293,21 @@ func (s *AuthService) Logout_Service(ctx context.Context, rawRefreshToken string
 	}
 
 	return s.AuthRepo.Logout(ctx, hashedTkn)
+}
+
+func (s *AuthService) MakeAdmin_Service(ctx context.Context, email string) error {
+	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	re := regexp.MustCompile(emailRegex)
+
+	if !re.MatchString(email) {
+		return model.ErrInvalidEmail
+	}
+
+	err := s.AuthRepo.MakeAdmin(ctx, email)
+	if err != nil {
+		log.Printf("Failed to make admin")
+		return err
+	}
+
+	return nil
 }
