@@ -3,8 +3,15 @@ package model
 import (
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
+
+type AccessTokenClaims struct {
+	jwt.RegisteredClaims
+	Email   string `json:"email"`
+	IsAdmin bool   `json:"is_admin"`
+}
 
 type TokenDetail struct {
 	AccessToken  string `json:"access_token"`
