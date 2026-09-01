@@ -25,4 +25,5 @@ var (
 	ErrDecodingBase64        = errors.New("Failed to decode base64 file data")
 	ErrInvalidToken          = errors.New("Invalid or expired token")
 	ErrTokenNotFound         = errors.New("Token not found")
+	ErrUserNotFound          = errors.New("User not found")
 )
