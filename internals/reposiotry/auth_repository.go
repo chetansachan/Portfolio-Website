@@ -120,5 +120,25 @@ func (r *AuthRepo) Logout(ctx context.Context, token string) error {
 		WHERE token = $1
 	`
 	_, err := r.Pool.Exec(ctx, query, token)
-	return err
+	if err != nil {
+		log.Printf("Database error: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *AuthRepo) MakeAdmin(ctx context.Context, email string) error {
+	query := `
+		UPDATE users SET is_admin = true
+		WHERE email = $1
+	`
+
+	_, err := r.Pool.Exec(ctx, query, email)
+	if err != nil {
+		log.Printf("Database error: %v", err)
+		return err
+	}
+
+	return nil
 }
