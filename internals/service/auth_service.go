@@ -259,10 +259,8 @@ func (s *AuthService) DeleteUserByID_Service(ctx context.Context, id uuid.UUID) 
 	}
 
 	if err := s.AuthRepo.DeleteUserByID(ctx, id); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return model.ErrUserNotFound
-		}
-		return fmt.Errorf("error finding user: %w", err)
+		log.Printf("failed to delete user from db: %v", err)
+		return err
 	}
 
 	return nil

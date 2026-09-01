@@ -368,6 +368,12 @@ func (c *AuthController) MakeAdmin_Controller(w http.ResponseWriter, r *http.Req
 				Success: false,
 				Message: "Invalid Email Id",
 			})
+		case errors.Is(err, model.ErrUserNotFound):
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(model.Response{
+				Success: false,
+				Message: "User Not Found",
+			})
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(model.Response{

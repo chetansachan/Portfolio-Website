@@ -105,11 +105,16 @@ func (r *AuthRepo) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
 		DELETE FROM users
 		WHERE id = $1
 	`
-	_, err := r.Pool.Exec(ctx, query, id)
+	cmdTag, err := r.Pool.Exec(ctx, query, id)
 	if err != nil {
 		log.Printf("Database error: %v", err)
 		return err
 	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return model.ErrUserNotFound
+	}
+
 	return nil
 }
 
@@ -134,11 +139,14 @@ func (r *AuthRepo) MakeAdmin(ctx context.Context, email string) error {
 		WHERE email = $1
 	`
 
-	var user model.User
-	err := r.Pool.QueryRow(ctx, query, email).Scan(&user.UserId, &user.Name, &user.Email, &user.Password, &user.Is_Admin, &user.Login_At)
+	cmdTag, err := r.Pool.Exec(ctx, query, email)
 	if err != nil {
 		log.Printf("Database error: %v", err)
 		return err
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return model.ErrUserNotFound
 	}
 
 	return nil
