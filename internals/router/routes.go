@@ -59,7 +59,7 @@ func Router() http.Handler {
 	mux.HandleFunc("POST /user/login", authController.Login_Controller)
 	mux.Handle("POST /user/logout", middelware.AuthMiddleware(http.HandlerFunc(authController.Logout_Controller)))
 	mux.HandleFunc("POST /user/refresh", authController.RefreshToken_Controller)
-	mux.Handle("POST /user/makeadmin", middelware.AdminMiddleware(http.HandlerFunc(authController.MakeAdmin_Controller)))
+	mux.HandleFunc("POST /user/makeadmin",authController.MakeAdmin_Controller)
 	mux.Handle("DELETE /user/deleteuser/{id}", middelware.AdminMiddleware(http.HandlerFunc(authController.DeleteUserByID_Controller)))
 	mux.Handle("POST /upload", middelware.AdminMiddleware(http.HandlerFunc(uploadController.Upload_Controller)))
 	mux.HandleFunc("GET /files/{file}", uploadController.FindFile_Controller)
