@@ -17,7 +17,7 @@ type AllowedExtension string
 
 const (
 	// MaxFileSize defines maximum allowed decoded file size (10 MB).
-	MaxFileSize = 15 * 1024 * 1024
+	MaxFileSize = 10 * 1024 * 1024
 
 	// Images
 	ExtPNG  AllowedExtension = "png"
