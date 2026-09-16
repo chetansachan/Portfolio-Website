@@ -19,7 +19,9 @@ type UploadResponse struct {
 	File    string `json:"file"`
 }
 
-const maxFileSize = 10 * 1024 * 1024
+// maxRequestBodySize allows up to 15 MB for the JSON request body,
+// which accommodates a 10 MB file encoded as Base64 JSON (~13.4 MB + metadata).
+const maxRequestBodySize = 15 * 1024 * 1024
 
 type UploadController struct {
 	UploadService *service.UploadService
@@ -41,7 +43,7 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
 
 	var File Upload
 	if err := json.NewDecoder(r.Body).Decode(&File); err != nil {
@@ -67,7 +69,8 @@ func (c *UploadController) Upload_Controller(w http.ResponseWriter, r *http.Requ
 		case errors.Is(err, model.ErrInvalidMimeStructure),
 			errors.Is(err, model.ErrInvalidMimeDetails),
 			errors.Is(err, model.ErrExtensionNotAllowed),
-			errors.Is(err, model.ErrDecodingBase64):
+			errors.Is(err, model.ErrDecodingBase64),
+			errors.Is(err, model.ErrFileTooLarge):
 			log.Printf("[WARN] File upload validation failed: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(model.Response{

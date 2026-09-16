@@ -16,6 +16,9 @@ import (
 type AllowedExtension string
 
 const (
+	// MaxFileSize defines maximum allowed decoded file size (10 MB).
+	MaxFileSize = 15 * 1024 * 1024
+
 	// Images
 	ExtPNG  AllowedExtension = "png"
 	ExtJPEG AllowedExtension = "jpeg"
@@ -53,6 +56,9 @@ func NewUploadService(uploadRepo *reposiotry.UploadRepo) *UploadService {
 func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (string, error) {
 	re1 := regexp.MustCompile(`^data:(?P<type>[\w/+-]+);base64,(?P<string>.+)$`)
 	matches := re1.FindStringSubmatch(base64)
+	if len(matches) < 2 {
+		return "", model.ErrInvalidMimeStructure
+	}
 
 	var mimeType, base64Str string
 	for i, name := range re1.SubexpNames() {
@@ -62,10 +68,6 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 		case "string":
 			base64Str = matches[i]
 		}
-	}
-
-	if len(matches) < 2 {
-		return "", model.ErrInvalidMimeStructure
 	}
 
 	re2 := regexp.MustCompile(`^[^/]+/([\w+-]+)$`)
@@ -82,6 +84,10 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 	data, err := Base64.StdEncoding.DecodeString(base64Str)
 	if err != nil {
 		return "", model.ErrDecodingBase64
+	}
+
+	if len(data) > MaxFileSize {
+		return "", model.ErrFileTooLarge
 	}
 
 	if err := os.MkdirAll("data/uploads", 0755); err != nil {
