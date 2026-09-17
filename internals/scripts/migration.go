@@ -4,13 +4,19 @@ import (
 	"database/sql"
 	"log"
 
+	"strings"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file" // registers the file:// driver
 )
 
 func RunMigration(path string, dbURL string) {
-	db, err := sql.Open("postgres", dbURL)
+	// Neon connection pooler (pgbouncer) does not support session advisory locks used by golang-migrate.
+	// Use direct connection endpoint for schema migrations if pooler endpoint is detected.
+	migrationURL := strings.Replace(dbURL, "-pooler.", ".", 1)
+
+	db, err := sql.Open("postgres", migrationURL)
 	if err != nil {
 		log.Fatal(err)
 	}

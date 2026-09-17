@@ -2,3 +2,5 @@
 *.exe
 tmp/
 data/
+node_modules/
+.agents/

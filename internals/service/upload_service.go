@@ -1,16 +1,19 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	Base64 "encoding/base64"
 	"fmt"
 	"os"
-	"portfolio-website/internals/config"
 	"portfolio-website/internals/model"
 	"portfolio-website/internals/reposiotry"
 	"regexp"
 
-	"github.com/google/uuid"
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/joho/godotenv"
 )
 
 type AllowedExtension string
@@ -90,51 +93,55 @@ func (s *UploadService) Upload_Service(ctx context.Context, base64 string) (stri
 		return "", model.ErrFileTooLarge
 	}
 
-	if err := os.MkdirAll("data/uploads", 0755); err != nil {
-		return "", fmt.Errorf("Error making directory: %w", err)
+	// 1. Get Cloudinary client
+	cld, err := credentials()
+	if err != nil {
+		return "", fmt.Errorf("cloudinary credentials error: %w", err)
 	}
 
-	id := uuid.NewString()
-	folder := "data/uploads/"
-	filename := id + "." + string(extractedExt)
-	if err := os.WriteFile(folder+filename, data, 0666); err != nil {
-		return "", fmt.Errorf("Error writing file: %w", err)
+	// 2. Upload to Cloudinary and get secure delivery URL
+	imageUrl, err := uploadImage(cld, data, ctx)
+	if err != nil {
+		return "", fmt.Errorf("cloudinary upload error: %w", err)
 	}
 
-	if err := s.UploadRepo.SaveFiles(ctx, filename, string(extractedExt), mimeType); err != nil {
-		return "", fmt.Errorf("Error Saving File into Database: %w", err)
+	// Optional: save record to database if you want to track uploads
+	if s.UploadRepo != nil {
+		_ = s.UploadRepo.SaveFiles(ctx, imageUrl, string(extractedExt), mimeType)
 	}
 
-	_, baseUrl := config.Load()
-
-	fileUrl := baseUrl + "/files/" + filename
-
-	return fileUrl, nil
+	// 3. Return the real Cloudinary URL
+	return imageUrl, nil
 }
 
-func (s *UploadService) FindFile_Service(ctx context.Context, filename string) (string, error) {
-	filePath := "data/uploads/" + filename
-	_, err := os.Stat(filePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", model.ErrFileNotFound
-		}
-		return "", fmt.Errorf("file error: %w", err)
+func credentials() (*cloudinary.Cloudinary, error) {
+	_ = godotenv.Load()
+	cldUrl := os.Getenv("CLOUDINARY_URL")
+	var cld *cloudinary.Cloudinary
+	var err error
+
+	if cldUrl != "" {
+		cld, err = cloudinary.NewFromURL(cldUrl)
+	} else {
+		cld, err = cloudinary.New()
 	}
 
-	return filePath, nil
+	if err != nil {
+		return nil, err
+	}
+
+	cld.Config.URL.Secure = true
+	return cld, nil
 }
 
-func (s *UploadService) DeleteFile_Service(ctx context.Context, filename string) error {
-	err := s.UploadRepo.DeleteFileByName(ctx, filename)
+func uploadImage(cld *cloudinary.Cloudinary, file []byte, ctx context.Context) (string, error) {
+	resp, err := cld.Upload.Upload(ctx, bytes.NewReader(file), uploader.UploadParams{
+		UniqueFilename: api.Bool(true),
+		Overwrite:      api.Bool(true),
+	})
 	if err != nil {
-		return fmt.Errorf("failed to delete file from database: %w", err)
+		return "", err
 	}
 
-	filePath := "data/uploads/" + filename
-	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to delete file from disk: %w", err)
-	}
-
-	return nil
+	return resp.SecureURL, nil
 }

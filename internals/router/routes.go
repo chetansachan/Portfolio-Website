@@ -62,8 +62,6 @@ func Router() http.Handler {
 	mux.HandleFunc("POST /user/makeadmin",authController.MakeAdmin_Controller)
 	mux.Handle("DELETE /user/deleteuser/{id}", middelware.AdminMiddleware(http.HandlerFunc(authController.DeleteUserByID_Controller)))
 	mux.Handle("POST /upload", middelware.AdminMiddleware(http.HandlerFunc(uploadController.Upload_Controller)))
-	mux.HandleFunc("GET /files/{file}", uploadController.FindFile_Controller)
-	mux.Handle("DELETE /deletefiles/{file}", middelware.AdminMiddleware(http.HandlerFunc(uploadController.DeleteFile_Controller)))
 
 	return mux
 }
