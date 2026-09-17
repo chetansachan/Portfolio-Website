@@ -19,9 +19,9 @@ type UploadResponse struct {
 	File    string `json:"file"`
 }
 
-// maxRequestBodySize allows up to 15 MB for the JSON request body,
-// which accommodates a 10 MB file encoded as Base64 JSON (~13.4 MB + metadata).
-const maxRequestBodySize = 15 * 1024 * 1024
+// maxRequestBodySize allows up to 30 MB for the JSON request body,
+// which accommodates a 20 MB file encoded as Base64 JSON (~26.7 MB + metadata).
+const maxRequestBodySize = 30 * 1024 * 1024
 
 type UploadController struct {
 	UploadService *service.UploadService

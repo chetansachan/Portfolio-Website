@@ -13,7 +13,7 @@ var (
 	ErrCaseStudyNotFound     = errors.New("Case Study not found")
 	ErrCaseStudyAlreadyExist = errors.New("Case Study already exists")
 	ErrFileNotFound          = errors.New("File not found")
-	ErrFileTooLarge          = errors.New("File size exceeds 10MB limit")
+	ErrFileTooLarge          = errors.New("File size exceeds 20MB limit")
 	ErrInvalidEmail          = errors.New("Invalid email format")
 	ErrPasswordRequired      = errors.New("Password is required and cannot be empty")
 	ErrPasswordTooShort      = errors.New("Password length must be at least 8 characters")

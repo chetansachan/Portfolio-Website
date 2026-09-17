@@ -16,8 +16,8 @@ import (
 type AllowedExtension string
 
 const (
-	// MaxFileSize defines maximum allowed decoded file size (10 MB).
-	MaxFileSize = 10 * 1024 * 1024
+	// MaxFileSize defines maximum allowed decoded file size (20 MB).
+	MaxFileSize = 20 * 1024 * 1024
 
 	// Images
 	ExtPNG  AllowedExtension = "png"

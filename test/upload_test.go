@@ -19,8 +19,8 @@ import (
 func TestUploadService_FileSizeLimit(t *testing.T) {
 	uploadService := service.NewUploadService(nil)
 
-	t.Run("File exceeds 10MB limit", func(t *testing.T) {
-		// 10MB + 1 byte
+	t.Run("File exceeds 20MB limit", func(t *testing.T) {
+		// 20MB + 1 byte
 		oversizedBytes := make([]byte, service.MaxFileSize+1)
 		b64 := Base64.StdEncoding.EncodeToString(oversizedBytes)
 		payload := "data:image/png;base64," + b64
@@ -66,7 +66,7 @@ func TestUploadController_RequestBodyLimit(t *testing.T) {
 	})
 
 	t.Run("File too large via oversized base64 payload in service", func(t *testing.T) {
-		// 10MB + 1 byte
+		// 20MB + 1 byte
 		oversizedBytes := make([]byte, service.MaxFileSize+1)
 		b64 := Base64.StdEncoding.EncodeToString(oversizedBytes)
 		payload := controller.Upload{
@@ -90,15 +90,15 @@ func TestUploadController_RequestBodyLimit(t *testing.T) {
 		if resp.Success {
 			t.Error("expected success to be false")
 		}
-		if resp.Message != "File size exceeds 10MB limit" {
-			t.Errorf("expected 'File size exceeds 10MB limit', got '%s'", resp.Message)
+		if resp.Message != "File size exceeds 20MB limit" {
+			t.Errorf("expected 'File size exceeds 20MB limit', got '%s'", resp.Message)
 		}
 	})
 
 	t.Run("Request body exceeds max request body size", func(t *testing.T) {
-		// Valid JSON structure with >15MB content to trigger MaxBytesReader cutoff
+		// Valid JSON structure with >30MB content to trigger MaxBytesReader cutoff
 		prefix := `{"file":"data:image/png;base64,`
-		filler := strings.Repeat("A", 16*1024*1024)
+		filler := strings.Repeat("A", 31*1024*1024)
 		suffix := `"}`
 		reader := io.MultiReader(
 			strings.NewReader(prefix),
